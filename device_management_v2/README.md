@@ -23,6 +23,17 @@ Alternativ:
 Hinweis:
 Die App startet auch ueber `python main.py`, selbst wenn die Scanner-Abhaengigkeiten auf diesem Python-Pfad fehlen. In diesem Fall bleiben Barcode- und QR-Funktionen deaktiviert.
 
+## Build
+
+Empfohlener Build fuer V2:
+
+```powershell
+Build_V2.bat
+```
+
+Der Build nutzt `DeviceManagementV2.spec` und erzeugt eine PySide6-basierte `DeviceManagementV2.exe`.
+PyInstaller muss in der verwendeten Python-Umgebung installiert sein.
+
 ## Aktueller Stand
 
 Der aktuelle `v2`-Stand ist lauffaehig und umfasst:
@@ -62,6 +73,10 @@ Der aktuelle `v2`-Stand ist lauffaehig und umfasst:
   Startpunkt fuer die lokale Entwicklung
 - `Start_V2.bat`
   empfohlener Windows-Start; nutzt eine funktionierende `.venv` oder den lokalen Python 3.13 unter `%LOCALAPPDATA%`
+- `Build_V2.bat`
+  Windows-Build ueber PyInstaller
+- `DeviceManagementV2.spec`
+  PyInstaller-Konfiguration fuer die PySide6-basierte V2
 - `config.json`
   lokale Entwicklungs-Konfiguration
 - `requirements.txt`
@@ -284,10 +299,16 @@ Syntaxcheck:
 - PySide6-Toolbar-Aktion fuer Backup erstellt
 - Tests fuer Backup-Erstellung und Sicherheitsregeln ergaenzt
 
+### Schritt 11: V2-Build-Pfad
+
+- eigene PyInstaller-Spec fuer V2 ergaenzt
+- Build-Batch fuer V2 ergaenzt
+- V2-Build vom alten v1-Build getrennt
+
 ## Naechste sinnvolle Schritte
 
 - Webcam-Scan
 - Konflikterkennung fuer parallele Bearbeitung
 - PySide6-UI weiter in Model/View-Tabellen und eigene Dialogmodule aufteilen
 - Export- und Reporting-Funktionen in `v2`
-- Release-/Build-Pfad fuer `v2`
+- Build testweise ausfuehren und Release-Ordner fuer `v2` definieren
