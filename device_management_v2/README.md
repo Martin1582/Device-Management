@@ -32,6 +32,7 @@ Der aktuelle `v2`-Stand ist lauffaehig und umfasst:
 - Legacy-Migration aus der bisherigen `assets`-Tabelle
 - Repository-Schicht fuer Assets, Personen, Zuweisungen und Audit-Timeline
 - PySide6-Oberflaeche mit Asset-Tabelle, Suche, Detailansicht, Zuweisungen und Timeline
+- CSV-Export und HTML-Druckansicht fuer die aktuell gefilterte Assetliste
 - Dialoge fuer:
   - Asset anlegen
   - Asset bearbeiten
@@ -75,6 +76,8 @@ Der aktuelle `v2`-Stand ist lauffaehig und umfasst:
   Datenzugriff und fachliche Workflows
 - `dmv2/services/scanner.py`
   Barcode-/QR-Code-Dekodierung aus Bilddateien
+- `dmv2/services/exporter.py`
+  CSV- und HTML-Export fuer Asset-Snapshots
 - `dmv2/ui/pyside_main_window.py`
   aktuelle PySide6-Hauptoberflaeche
 - `dmv2/ui/dialogs.py`
@@ -151,6 +154,12 @@ Aktuell unterstuetzt:
 - Uebernahme der erkannten Kennung in den Asset-Dialog
 - Suche nach Asset ueber gescannten Code
 
+## Export
+
+- CSV-Export der aktuell gefilterten Assetliste
+- HTML-Druckansicht der aktuell gefilterten Assetliste
+- Exportwerte werden aus den v2-Asset-Snapshots erzeugt
+
 Noch nicht enthalten:
 
 - Webcam-Live-Scan
@@ -172,6 +181,7 @@ Abgedeckte Bereiche:
 - Zuweisungen
 - Scanner-Service
 - PySide6-Dialoge
+- CSV-/HTML-Export
 
 Tests starten:
 

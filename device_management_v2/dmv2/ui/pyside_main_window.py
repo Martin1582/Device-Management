@@ -38,6 +38,11 @@ from PySide6.QtWidgets import (
 
 from ..config import load_config, resolve_database_path
 from ..db.repository import ConflictError, DatabaseRepository, EditClaimError
+from ..services.exporter import (
+    build_export_filename,
+    export_asset_snapshots_to_csv,
+    export_asset_snapshots_to_html,
+)
 from ..services.scanner import decode_identifier_from_file, scanner_runtime_available
 from .dialogs import AssignmentDialog, AssetDialog, PeopleDialog
 
@@ -95,6 +100,7 @@ class DeviceManagementV2Window(QMainWindow):
         self.editor_label = f"{getpass.getuser()} @ {socket.gethostname()}"
         self.editor_id = f"{self.editor_label} :: {uuid.uuid4().hex[:8]}"
         self.asset_rows: list[dict] = []
+        self.filtered_asset_rows: list[dict] = []
 
         self.setWindowTitle(self.config_data.get("app_name", "Device Management v2"))
         self.resize(1440, 900)
@@ -141,6 +147,10 @@ class DeviceManagementV2Window(QMainWindow):
         self.return_action.triggered.connect(self.return_asset)
         self.scan_action = QAction("Code suchen", self)
         self.scan_action.triggered.connect(self.scan_identifier)
+        self.export_csv_action = QAction("CSV exportieren", self)
+        self.export_csv_action.triggered.connect(self.export_current_view_to_csv)
+        self.print_html_action = QAction("Druckansicht", self)
+        self.print_html_action.triggered.connect(self.export_current_view_to_html)
 
         toolbar = QToolBar("Hauptaktionen")
         toolbar.setMovable(False)
@@ -156,6 +166,9 @@ class DeviceManagementV2Window(QMainWindow):
         toolbar.addAction(self.return_action)
         toolbar.addSeparator()
         toolbar.addAction(self.scan_action)
+        toolbar.addSeparator()
+        toolbar.addAction(self.export_csv_action)
+        toolbar.addAction(self.print_html_action)
         self.addToolBar(toolbar)
         self._update_action_state()
 
@@ -472,6 +485,7 @@ class DeviceManagementV2Window(QMainWindow):
             if query and query not in haystack:
                 continue
             rows.append(row)
+        self.filtered_asset_rows = rows
 
         self.asset_table.setRowCount(len(rows))
         self.asset_stack.setCurrentWidget(self.asset_table if rows else self.asset_stack.widget(1))
@@ -610,6 +624,9 @@ class DeviceManagementV2Window(QMainWindow):
         self.edit_assignment_action.setEnabled(has_assignment)
         self.return_action.setEnabled(has_assignment)
         self.scan_action.setEnabled(self.scanner_available)
+        has_visible_rows = bool(self.filtered_asset_rows)
+        self.export_csv_action.setEnabled(has_visible_rows)
+        self.print_html_action.setEnabled(has_visible_rows)
 
     def acquire_asset_claim(self, asset: dict) -> bool:
         try:
@@ -802,6 +819,44 @@ class DeviceManagementV2Window(QMainWindow):
                         QMessageBox.critical(self, "Asset anlegen", str(exc))
                         return
                     self.refresh_view(origin="local-write")
+
+    def export_current_view_to_csv(self) -> None:
+        if not self.filtered_asset_rows:
+            QMessageBox.information(self, "CSV exportieren", "Die aktuelle Ansicht enthaelt keine Assets.")
+            return
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "CSV exportieren",
+            build_export_filename("csv"),
+            "CSV-Dateien (*.csv);;Alle Dateien (*.*)",
+        )
+        if not file_path:
+            return
+        try:
+            export_asset_snapshots_to_csv(self.filtered_asset_rows, file_path)
+        except Exception as exc:
+            QMessageBox.critical(self, "CSV exportieren", str(exc))
+            return
+        self.status_label.setText(f"CSV exportiert: {Path(file_path).name}")
+
+    def export_current_view_to_html(self) -> None:
+        if not self.filtered_asset_rows:
+            QMessageBox.information(self, "Druckansicht", "Die aktuelle Ansicht enthaelt keine Assets.")
+            return
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Druckansicht speichern",
+            build_export_filename("html", prefix="DeviceManagementV2_Inventarliste"),
+            "HTML-Dateien (*.html);;Alle Dateien (*.*)",
+        )
+        if not file_path:
+            return
+        try:
+            export_asset_snapshots_to_html(self.filtered_asset_rows, file_path)
+        except Exception as exc:
+            QMessageBox.critical(self, "Druckansicht", str(exc))
+            return
+        self.status_label.setText(f"Druckansicht gespeichert: {Path(file_path).name}")
 
 
 def run():
