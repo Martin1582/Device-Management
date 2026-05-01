@@ -33,6 +33,7 @@ Der aktuelle `v2`-Stand ist lauffaehig und umfasst:
 - Repository-Schicht fuer Assets, Personen, Zuweisungen und Audit-Timeline
 - PySide6-Oberflaeche mit Asset-Tabelle, Suche, Detailansicht, Zuweisungen und Timeline
 - CSV-Export und HTML-Druckansicht fuer die aktuell gefilterte Assetliste
+- Asset-Tabelle auf Qt Model/View mit Filter-Proxy umgestellt
 - Dialoge fuer:
   - Asset anlegen
   - Asset bearbeiten
@@ -82,6 +83,8 @@ Der aktuelle `v2`-Stand ist lauffaehig und umfasst:
   aktuelle PySide6-Hauptoberflaeche
 - `dmv2/ui/dialogs.py`
   PySide6-Dialoge fuer Assets, Personen, Personenverwaltung und Zuweisungen
+- `dmv2/ui/models.py`
+  Qt-Tabellenmodell und Filter-Proxy fuer die Asset-Uebersicht
 - `dmv2/ui/main_window.py`
   alte customtkinter-Oberflaeche als Referenzbestand
 - `tests/`
@@ -181,6 +184,7 @@ Abgedeckte Bereiche:
 - Zuweisungen
 - Scanner-Service
 - PySide6-Dialoge
+- PySide6-Tabellenmodell und Filter-Proxy
 - CSV-/HTML-Export
 
 Tests starten:
@@ -258,6 +262,12 @@ Syntaxcheck:
 - Smoke-Tests fuer zentrale Dialogwerte ergaenzt
 - vorhandene Repository-, Migrations- und Scanner-Schicht beibehalten
 - `Start_V2.bat` robuster gegen eine nicht portable `.venv` gemacht
+
+### Schritt 9: V2-Export und Tabellenmodell
+
+- CSV-Export und HTML-Druckansicht fuer die aktuelle Asset-Ansicht ergaenzt
+- Asset-Uebersicht von `QTableWidget` auf `QTableView` mit `QAbstractTableModel` und `QSortFilterProxyModel` umgestellt
+- Tests fuer Exportservice und Tabellenmodell ergaenzt
 
 ## Naechste sinnvolle Schritte
 

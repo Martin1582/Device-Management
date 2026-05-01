@@ -27,8 +27,7 @@ from PySide6.QtWidgets import (
     QSplitter,
     QStackedWidget,
     QStatusBar,
-    QTableWidget,
-    QTableWidgetItem,
+    QTableView,
     QTabWidget,
     QTextEdit,
     QToolBar,
@@ -45,6 +44,7 @@ from ..services.exporter import (
 )
 from ..services.scanner import decode_identifier_from_file, scanner_runtime_available
 from .dialogs import AssignmentDialog, AssetDialog, PeopleDialog
+from .models import AssetFilterProxyModel, AssetTableModel
 
 
 INVENTORY_STATUSES = ("active", "inactive", "retired")
@@ -101,6 +101,9 @@ class DeviceManagementV2Window(QMainWindow):
         self.editor_id = f"{self.editor_label} :: {uuid.uuid4().hex[:8]}"
         self.asset_rows: list[dict] = []
         self.filtered_asset_rows: list[dict] = []
+        self.asset_model = AssetTableModel()
+        self.asset_proxy = AssetFilterProxyModel()
+        self.asset_proxy.setSourceModel(self.asset_model)
 
         self.setWindowTitle(self.config_data.get("app_name", "Device Management v2"))
         self.resize(1440, 900)
@@ -244,16 +247,15 @@ class DeviceManagementV2Window(QMainWindow):
         layout.setContentsMargins(12, 14, 12, 12)
         layout.setSpacing(8)
         self.asset_stack = QStackedWidget()
-        self.asset_table = QTableWidget(0, 8)
-        self.asset_table.setHorizontalHeaderLabels(
-            ["ID", "Typ", "SN / IMEI", "Modell", "Hersteller", "Status", "User", "Hostname"]
-        )
+        self.asset_table = QTableView()
+        self.asset_table.setModel(self.asset_proxy)
         self.asset_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.asset_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.asset_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.asset_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.asset_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.asset_table.itemSelectionChanged.connect(self.handle_asset_selection)
+        self.asset_table.setSortingEnabled(True)
+        self.asset_table.selectionModel().selectionChanged.connect(self.handle_asset_selection)
         self.asset_table.doubleClicked.connect(self.edit_asset)
         self.asset_stack.addWidget(self.asset_table)
         self.asset_stack.addWidget(self._build_empty_asset_state())
@@ -353,7 +355,7 @@ class DeviceManagementV2Window(QMainWindow):
                 background: #c7d2de;
                 color: #64748b;
             }
-            QLineEdit, QComboBox, QTextEdit, QTableWidget {
+            QLineEdit, QComboBox, QTextEdit, QTableView {
                 background: #ffffff;
                 border: 1px solid #ccd6e2;
                 border-radius: 5px;
@@ -464,6 +466,7 @@ class DeviceManagementV2Window(QMainWindow):
         self.assignment_metric.set_value(status.assignment_count)
         self.schema_metric.set_value(status.schema_version)
         self.db_badge.setText(f"Datenbank: {_compact_path(self.db_path)}")
+        self.asset_model.set_rows(self.asset_rows)
         self.apply_filter(keep_selection=True)
         self.sync_label.setText(f"Letzte Aktualisierung: {datetime.now().strftime('%H:%M:%S')}")
         if origin != "auto":
@@ -474,39 +477,14 @@ class DeviceManagementV2Window(QMainWindow):
         query = self.search_edit.text().casefold().strip()
         status_filter = self.status_filter.currentText()
 
-        rows = []
-        for row in self.asset_rows:
-            if status_filter != "Alle Status" and row["inventory_status"] != status_filter:
-                continue
-            haystack = " ".join(
-                _text(row.get(key))
-                for key in ("device_type", "asset_tag", "model_name", "manufacturer", "inventory_status", "assigned_to", "hostname")
-            ).casefold()
-            if query and query not in haystack:
-                continue
-            rows.append(row)
+        self.asset_proxy.set_query(query)
+        self.asset_proxy.set_status(status_filter)
+        rows = self.asset_proxy.visible_rows()
         self.filtered_asset_rows = rows
-
-        self.asset_table.setRowCount(len(rows))
         self.asset_stack.setCurrentWidget(self.asset_table if rows else self.asset_stack.widget(1))
         matched_selected = False
+        self.asset_table.clearSelection()
         for row_index, row in enumerate(rows):
-            values = [
-                row["id"],
-                row["device_type"],
-                row["asset_tag"],
-                row["model_name"],
-                row["manufacturer"],
-                row["inventory_status"],
-                row["assigned_to"] or "",
-                row["hostname"] or "",
-            ]
-            for column, value in enumerate(values):
-                item = QTableWidgetItem(_text(value))
-                item.setData(Qt.UserRole, row["id"])
-                if column == 0:
-                    item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-                self.asset_table.setItem(row_index, column, item)
             if selected_id == row["id"]:
                 self.asset_table.selectRow(row_index)
                 matched_selected = True
@@ -529,11 +507,13 @@ class DeviceManagementV2Window(QMainWindow):
         self._update_action_state()
 
     def handle_asset_selection(self) -> None:
-        row = self.asset_table.currentRow()
-        if row < 0:
+        selected_rows = self.asset_table.selectionModel().selectedRows()
+        if not selected_rows:
             self.selected_asset_id = None
         else:
-            self.selected_asset_id = int(self.asset_table.item(row, 0).data(Qt.UserRole))
+            source_index = self.asset_proxy.mapToSource(selected_rows[0])
+            row = self.asset_model.row_at(source_index.row())
+            self.selected_asset_id = row["id"] if row else None
         self.update_detail_panel()
         self._update_action_state()
 
