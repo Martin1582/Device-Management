@@ -5,7 +5,7 @@ a = Analysis(
     ['v0.2.py'],
     pathex=[],
     binaries=[],
-    datas=[('BRNL.ico', '.'), ('BRNL.png', '.')],
+    datas=[],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -35,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['BRNL.ico'],
+    icon=None,
 )

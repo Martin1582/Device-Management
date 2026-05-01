@@ -52,13 +52,12 @@ Integritätsregeln
 Build und Tests
 - Tests: python -m unittest test_db_manager.py test_services.py
 - Syntaxcheck: python -m py_compile v0.2.py test_db_manager.py test_services.py asset_manager\*.py
-- EXE-Build: python -m PyInstaller --noconfirm --clean --onefile --windowed --icon BRNL.ico --add-data "BRNL.ico;." --add-data "BRNL.png;." --name DeviceManagement v0.2.py
+- EXE-Build: python -m PyInstaller --noconfirm --clean --onefile --windowed --name DeviceManagement v0.2.py
 
 Release-Inhalt
 - DeviceManagement.exe
 - it_assets.db
 - config.json
-- BRNL.ico
 - Beispiel_Import.xlsx
 - README_User.md
 - README_Admin.md

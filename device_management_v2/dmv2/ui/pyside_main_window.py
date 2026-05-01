@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QAction, QIcon
+from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -133,9 +133,8 @@ class DeviceManagementV2Window(QMainWindow):
         return local_root / filename
 
     def _apply_icon(self) -> None:
-        icon_path = self._resource_path("BRNL.ico")
-        if icon_path.exists():
-            self.setWindowIcon(QIcon(str(icon_path)))
+        # Use the platform default icon until a neutral project-owned icon exists.
+        return
 
     def _build_actions(self) -> None:
         self.refresh_action = QAction("Aktualisieren", self)

@@ -1,7 +1,7 @@
-BRUNEL_BLUE = "#003366"
-BRUNEL_BLUE_DARK = "#0f2740"
+PRIMARY_BLUE = "#003366"
+PRIMARY_BLUE_DARK = "#0f2740"
 
-BRUNEL_ACCENT = ("#d9e8f5", "#1f3b57")
+PRIMARY_ACCENT = ("#d9e8f5", "#1f3b57")
 CUSTOM_BG_COLOR = ("#dfe7ef", "#1f252c")
 PANEL_BG = ("#f4f7fb", "#2a3138")
 CARD_BG = ("#ffffff", "#303841")

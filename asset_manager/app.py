@@ -3,15 +3,12 @@ import sqlite3
 import sys
 from ctypes import windll
 from pathlib import Path
-from tkinter import PhotoImage, filedialog, messagebox
+from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
 
 from .config import load_config, resolve_database_path
 from .constants import (
-    BRUNEL_ACCENT,
-    BRUNEL_BLUE,
-    BRUNEL_BLUE_DARK,
     CARD_BG,
     CARD_BORDER,
     CUSTOM_BG_COLOR,
@@ -25,6 +22,9 @@ from .constants import (
     NEUTRAL_BG,
     NEUTRAL_HOVER,
     PANEL_BG,
+    PRIMARY_ACCENT,
+    PRIMARY_BLUE,
+    PRIMARY_BLUE_DARK,
     RESTORE_BG,
     RESTORE_HOVER,
     SEARCH_BG,
@@ -56,7 +56,7 @@ from .services import (
 )
 
 
-class BrunelAssetManager(ctk.CTk):
+class DeviceManagementApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.config_data = load_config()
@@ -64,8 +64,8 @@ class BrunelAssetManager(ctk.CTk):
         self.selected_asset_tag = None
         self.selected_asset_type = None
         self.summary_cards = {}
-        self.icon_path = self._resource_path("BRNL.ico")
-        self.icon_png_path = self._resource_path("BRNL.png")
+        self.icon_path = None
+        self.icon_png_path = None
         self._window_icon_image = None
         self.last_seen_update = None
         self.last_sync_text = ctk.StringVar(value="Letzte Aktualisierung: noch nicht synchronisiert")
@@ -74,7 +74,7 @@ class BrunelAssetManager(ctk.CTk):
         self.global_search_var = ctk.StringVar()
         self.global_search_var.trace_add("write", lambda *_args: self.refresh_data())
 
-        self.title("Brunel IT Asset Manager")
+        self.title("Device Management")
         self.geometry("1460x920")
         self.minsize(1260, 820)
         self.configure(fg_color=CUSTOM_BG_COLOR)
@@ -106,15 +106,15 @@ class BrunelAssetManager(ctk.CTk):
 
     def _apply_window_icon(self):
         try:
-            windll.shell32.SetCurrentProcessExplicitAppUserModelID("brunel.device.management")
+            windll.shell32.SetCurrentProcessExplicitAppUserModelID("device.management")
         except Exception:
             pass
-        if self.icon_path.exists():
+        if self.icon_path and self.icon_path.exists():
             try:
                 self.iconbitmap(default=str(self.icon_path))
             except Exception:
                 pass
-        if self.icon_png_path.exists():
+        if self.icon_png_path and self.icon_png_path.exists():
             try:
                 self._window_icon_image = PhotoImage(file=str(self.icon_png_path))
                 self.iconphoto(True, self._window_icon_image)
@@ -152,7 +152,7 @@ class BrunelAssetManager(ctk.CTk):
         ctk.CTkButton(
             topbar,
             text="Import-Vorschau",
-            fg_color=BRUNEL_ACCENT,
+            fg_color=PRIMARY_ACCENT,
             hover_color="#d6e2ee",
             text_color=TEXT_PRIMARY,
             width=145,
@@ -164,8 +164,8 @@ class BrunelAssetManager(ctk.CTk):
         ctk.CTkButton(
             topbar,
             text="Export",
-            fg_color=BRUNEL_BLUE,
-            hover_color=BRUNEL_BLUE_DARK,
+            fg_color=PRIMARY_BLUE,
+            hover_color=PRIMARY_BLUE_DARK,
             width=100,
             height=42,
             font=("Arial", 13, "bold"),
@@ -210,7 +210,7 @@ class BrunelAssetManager(ctk.CTk):
         summary.grid(row=1, column=0, padx=22, pady=(0, 12), sticky="ew")
         for index in range(4):
             summary.grid_columnconfigure(index, weight=1)
-        self.summary_cards["total"] = self._create_summary_card(summary, 0, "Assets gesamt", "0", BRUNEL_ACCENT)
+        self.summary_cards["total"] = self._create_summary_card(summary, 0, "Assets gesamt", "0", PRIMARY_ACCENT)
         self.summary_cards["active"] = self._create_summary_card(summary, 1, "Aktiv", "0", SUCCESS_BG)
         self.summary_cards["inactive"] = self._create_summary_card(summary, 2, "Inaktiv", "0", INACTIVE_BG)
         self.summary_cards["incomplete"] = self._create_summary_card(summary, 3, "Ohne Hostname", "0", WARNING_BG)
@@ -234,8 +234,8 @@ class BrunelAssetManager(ctk.CTk):
 
         self.tabview = ctk.CTkTabview(
             workspace,
-            segmented_button_selected_color=BRUNEL_BLUE,
-            segmented_button_selected_hover_color=BRUNEL_BLUE_DARK,
+            segmented_button_selected_color=PRIMARY_BLUE,
+            segmented_button_selected_hover_color=PRIMARY_BLUE_DARK,
             segmented_button_unselected_color="#cad4df",
             segmented_button_unselected_hover_color="#bac6d3",
             text_color=TEXT_PRIMARY,
@@ -269,8 +269,8 @@ class BrunelAssetManager(ctk.CTk):
 
         actions = ctk.CTkFrame(left, fg_color="transparent")
         actions.pack(anchor="w", pady=(12, 0))
-        self._create_action_button(actions, "Onboarding", BRUNEL_BLUE, lambda: self.action_popup("Onboarding", device_type))
-        self._create_action_button(actions, "Change", BRUNEL_ACCENT, lambda: self.action_popup("Change", device_type), text_color=TEXT_PRIMARY)
+        self._create_action_button(actions, "Onboarding", PRIMARY_BLUE, lambda: self.action_popup("Onboarding", device_type))
+        self._create_action_button(actions, "Change", PRIMARY_ACCENT, lambda: self.action_popup("Change", device_type), text_color=TEXT_PRIMARY)
         self._create_action_button(actions, "Offboarding", "#f3d7d8", lambda: self.action_offboarding(device_type), text_color="#7b1d20")
         self._create_action_button(actions, "Löschen", DELETE_BG, lambda: self.action_delete(device_type), text_color=DELETE_TEXT)
 
@@ -387,7 +387,7 @@ class BrunelAssetManager(ctk.CTk):
             parent,
             text=text,
             fg_color=fg_color,
-            hover_color=BRUNEL_BLUE_DARK if fg_color == BRUNEL_BLUE else "#d6e2ee",
+            hover_color=PRIMARY_BLUE_DARK if fg_color == PRIMARY_BLUE else "#d6e2ee",
             text_color=text_color,
             font=("Arial", 13, "bold"),
             width=120,
@@ -542,8 +542,8 @@ class BrunelAssetManager(ctk.CTk):
         ctk.CTkButton(
             button_row,
             text="Import ausführen",
-            fg_color=BRUNEL_BLUE,
-            hover_color=BRUNEL_BLUE_DARK,
+            fg_color=PRIMARY_BLUE,
+            hover_color=PRIMARY_BLUE_DARK,
             width=160,
             command=run_import,
         ).pack(side="right")
@@ -612,10 +612,10 @@ class BrunelAssetManager(ctk.CTk):
         status_pill = self._create_status_pill(content, row["status"])
         status_pill.grid(row=0, column=2, rowspan=2, sticky="e")
 
-        icon_frame = ctk.CTkFrame(content, fg_color=BRUNEL_ACCENT, width=54, height=54, corner_radius=18)
+        icon_frame = ctk.CTkFrame(content, fg_color=PRIMARY_ACCENT, width=54, height=54, corner_radius=18)
         icon_frame.grid(row=0, column=0, rowspan=2, sticky="w", padx=(0, 14))
         icon_frame.grid_propagate(False)
-        ctk.CTkLabel(icon_frame, text="SP" if device_type == "Smartphone" else "NB", font=("Arial", 15, "bold"), text_color=BRUNEL_BLUE).place(relx=0.5, rely=0.5, anchor="center")
+        ctk.CTkLabel(icon_frame, text="SP" if device_type == "Smartphone" else "NB", font=("Arial", 15, "bold"), text_color=PRIMARY_BLUE).place(relx=0.5, rely=0.5, anchor="center")
 
         ctk.CTkLabel(content, text=row["user_name"], font=("Arial", 16, "bold"), text_color=TEXT_PRIMARY).grid(row=0, column=1, sticky="w")
         ctk.CTkLabel(content, text=row["model"], font=("Arial", 13), text_color=TEXT_MUTED).grid(row=1, column=1, sticky="w", pady=(4, 0))
@@ -701,7 +701,7 @@ class BrunelAssetManager(ctk.CTk):
         for tab_data in self.tabs.values():
             for child in tab_data["scroll_frame"].winfo_children():
                 child.configure(border_color=CARD_BORDER, border_width=1)
-        card_widget.configure(border_color=BRUNEL_BLUE, border_width=2)
+        card_widget.configure(border_color=PRIMARY_BLUE, border_width=2)
         self.selected_asset_tag = tag
         self.selected_asset_type = device_type
         self._update_detail_panel()
@@ -768,11 +768,11 @@ class BrunelAssetManager(ctk.CTk):
         if action == "Change":
             selected_asset = self.get_selected_asset()
             if not selected_asset:
-                messagebox.showwarning("Brunel IT", "Bitte erst ein Gerät auswählen.")
+                messagebox.showwarning("Device Management", "Bitte erst ein Gerät auswählen.")
                 return
 
         modal = ctk.CTkToplevel(self)
-        modal.title(f"Brunel - {action}")
+        modal.title(f"Device Management - {action}")
         modal.geometry("500x580")
         modal.configure(fg_color=PANEL_BG)
         modal.attributes("-topmost", True)
@@ -824,14 +824,14 @@ class BrunelAssetManager(ctk.CTk):
                 self.refresh_data(device_type)
                 modal.destroy()
             except ValueError as exc:
-                messagebox.showwarning("Brunel IT", str(exc))
+                messagebox.showwarning("Device Management", str(exc))
             except sqlite3.IntegrityError as exc:
-                messagebox.showwarning("Brunel IT", self.build_integrity_message(asset_tag, extra_info, exc))
+                messagebox.showwarning("Device Management", self.build_integrity_message(asset_tag, extra_info, exc))
             except sqlite3.Error as exc:
                 messagebox.showerror("Datenbankfehler", str(exc))
 
         ctk.CTkButton(buttons, text="Abbrechen", fg_color=NEUTRAL_BG, hover_color=NEUTRAL_HOVER, text_color=TEXT_PRIMARY, height=42, corner_radius=16, command=modal.destroy).grid(row=0, column=0, padx=(0, 8), sticky="ew")
-        ctk.CTkButton(buttons, text="Speichern", fg_color=BRUNEL_BLUE, hover_color=BRUNEL_BLUE_DARK, height=42, corner_radius=16, command=save).grid(row=0, column=1, padx=(8, 0), sticky="ew")
+        ctk.CTkButton(buttons, text="Speichern", fg_color=PRIMARY_BLUE, hover_color=PRIMARY_BLUE_DARK, height=42, corner_radius=16, command=save).grid(row=0, column=1, padx=(8, 0), sticky="ew")
 
     def create_input(self, master, label):
         wrapper = ctk.CTkFrame(master, fg_color="transparent")
@@ -844,19 +844,19 @@ class BrunelAssetManager(ctk.CTk):
     def action_offboarding(self, device_type):
         asset = self.get_selected_asset()
         if not asset:
-            messagebox.showwarning("Brunel IT", "Bitte erst ein Gerät auswählen.")
+            messagebox.showwarning("Device Management", "Bitte erst ein Gerät auswählen.")
             return
         if messagebox.askyesno("Abmeldung", f"Gerät {asset['asset_tag']} deaktivieren?"):
             try:
                 self.db.deactivate_asset(asset["asset_tag"], actor=self.actor)
                 self.refresh_data(device_type)
             except (ValueError, sqlite3.Error) as exc:
-                messagebox.showerror("Brunel IT", str(exc))
+                messagebox.showerror("Device Management", str(exc))
 
     def action_delete(self, device_type):
         asset = self.get_selected_asset()
         if not asset:
-            messagebox.showwarning("Brunel IT", "Bitte erst ein Gerät auswählen.")
+            messagebox.showwarning("Device Management", "Bitte erst ein Gerät auswählen.")
             return
         if messagebox.askyesno("Löschen", f"Gerät {asset['asset_tag']} wirklich dauerhaft löschen?\nDiese Aktion kann nicht rückgängig gemacht werden."):
             try:
@@ -864,7 +864,7 @@ class BrunelAssetManager(ctk.CTk):
                 self.selected_asset_tag = None
                 self.refresh_data(device_type)
             except (ValueError, sqlite3.Error) as exc:
-                messagebox.showerror("Brunel IT", str(exc))
+                messagebox.showerror("Device Management", str(exc))
 
     def build_integrity_message(self, asset_tag, extra_info, error):
         error_message = str(error).lower()
