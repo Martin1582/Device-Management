@@ -14,6 +14,7 @@ Projektstruktur
 - asset_manager/db.py: Datenzugriff, Historie, Integritätsregeln, Mehrbenutzer-Stufe 1
 - asset_manager/services.py: Import, Export, Backup/Restore, Berichte, Druckansicht
 - asset_manager/config.py: Laden und Auflösen der Konfiguration
+- assets/app_icon.*: neutrales projektspezifisches App-Icon
 - test_db_manager.py: Datenbanktests
 - test_services.py: Service- und Importtests
 
@@ -52,7 +53,7 @@ Integritätsregeln
 Build und Tests
 - Tests: python -m unittest test_db_manager.py test_services.py
 - Syntaxcheck: python -m py_compile v0.2.py test_db_manager.py test_services.py asset_manager\*.py
-- EXE-Build: python -m PyInstaller --noconfirm --clean --onefile --windowed --name DeviceManagement v0.2.py
+- EXE-Build: python -m PyInstaller --noconfirm --clean --onefile --windowed --icon assets/app_icon.ico --add-data "assets/app_icon.ico;assets" --add-data "assets/app_icon.png;assets" --name DeviceManagement v0.2.py
 
 Release-Inhalt
 - DeviceManagement.exe

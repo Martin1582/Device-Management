@@ -2,7 +2,7 @@ from datetime import datetime
 import getpass
 from pathlib import Path
 import socket
-from tkinter import filedialog, messagebox
+from tkinter import PhotoImage, filedialog, messagebox
 import uuid
 
 import customtkinter as ctk
@@ -80,13 +80,26 @@ class DeviceManagementV2App(ctk.CTk):
     def _resource_path(self, filename):
         local_root = Path(__file__).resolve().parents[2]
         project_root = local_root.parent
-        for candidate in (local_root / filename, project_root / filename):
+        workspace_root = project_root.parent
+        for candidate in (local_root / filename, project_root / filename, workspace_root / filename):
             if candidate.exists():
                 return candidate
         return local_root / filename
 
     def _apply_window_icon(self):
-        return
+        icon_path = self._resource_path("assets/app_icon.ico")
+        png_path = self._resource_path("assets/app_icon.png")
+        if icon_path.exists():
+            try:
+                self.iconbitmap(default=str(icon_path))
+            except Exception:
+                pass
+        if png_path.exists():
+            try:
+                self._icon_image = PhotoImage(file=str(png_path))
+                self.iconphoto(True, self._icon_image)
+            except Exception:
+                pass
 
     def _build_header(self, parent):
         header = ctk.CTkFrame(parent, fg_color="transparent")

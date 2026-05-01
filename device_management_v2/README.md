@@ -33,6 +33,7 @@ Build_V2.bat
 
 Der Build nutzt `DeviceManagementV2.spec` und erzeugt eine PySide6-basierte `DeviceManagementV2.exe`.
 PyInstaller muss in der verwendeten Python-Umgebung installiert sein.
+Das neutrale App-Icon liegt unter `..\assets\app_icon.*`.
 
 ## Aktueller Stand
 

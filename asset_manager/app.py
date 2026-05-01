@@ -3,7 +3,7 @@ import sqlite3
 import sys
 from ctypes import windll
 from pathlib import Path
-from tkinter import filedialog, messagebox
+from tkinter import PhotoImage, filedialog, messagebox
 
 import customtkinter as ctk
 
@@ -64,8 +64,8 @@ class DeviceManagementApp(ctk.CTk):
         self.selected_asset_tag = None
         self.selected_asset_type = None
         self.summary_cards = {}
-        self.icon_path = None
-        self.icon_png_path = None
+        self.icon_path = self._resource_path("assets/app_icon.ico")
+        self.icon_png_path = self._resource_path("assets/app_icon.png")
         self._window_icon_image = None
         self.last_seen_update = None
         self.last_sync_text = ctk.StringVar(value="Letzte Aktualisierung: noch nicht synchronisiert")
