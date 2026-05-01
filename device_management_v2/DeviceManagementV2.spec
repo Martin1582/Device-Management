@@ -6,8 +6,8 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ("..\\BRNL.ico", "."),
-        ("..\\BRNL.png", "."),
+        ("..\\assets\\app_icon.ico", "assets"),
+        ("..\\assets\\app_icon.png", "assets"),
         ("config.json", "."),
     ],
     hiddenimports=[
@@ -44,5 +44,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=["..\\BRNL.ico"],
+    icon=["..\\assets\\app_icon.ico"],
 )

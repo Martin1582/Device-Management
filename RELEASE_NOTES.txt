@@ -5,7 +5,6 @@ Inhalt
 - DeviceManagement.exe
 - it_assets.db
 - config.json
-- BRNL.ico
 - Beispiel_Import.xlsx
 - README_Start.txt
 - README_User.md

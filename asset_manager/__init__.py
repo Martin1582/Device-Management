@@ -1,3 +1,3 @@
-from .app import BrunelAssetManager
+from .app import DeviceManagementApp
 
-__all__ = ["BrunelAssetManager"]
+__all__ = ["DeviceManagementApp"]

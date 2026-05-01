@@ -33,6 +33,7 @@ Build_V2.bat
 
 Der Build nutzt `DeviceManagementV2.spec` und erzeugt eine PySide6-basierte `DeviceManagementV2.exe`.
 PyInstaller muss in der verwendeten Python-Umgebung installiert sein.
+Das neutrale App-Icon liegt unter `..\assets\app_icon.*`.
 
 ## Aktueller Stand
 
@@ -46,6 +47,7 @@ Der aktuelle `v2`-Stand ist lauffaehig und umfasst:
 - CSV-Export und HTML-Druckansicht fuer die aktuell gefilterte Assetliste
 - Asset-Tabelle auf Qt Model/View mit Filter-Proxy umgestellt
 - Datenbank-Backup fuer die aktive SQLite-Datei
+- Datenbank-Restore mit automatischem Sicherheitsbackup vor dem Ueberschreiben
 - Dialoge fuer:
   - Asset anlegen
   - Asset bearbeiten
@@ -186,6 +188,12 @@ Aktuell unterstuetzt:
 - Backup erstellt eine Kopie der aktiven SQLite-Datenbank
 - Backup-Ziel darf nicht identisch mit der aktiven Datenbankdatei sein
 
+## Restore
+
+- Restore ersetzt die aktive SQLite-Datenbank durch eine ausgewaehlte Backup-Datei
+- vor dem Restore wird automatisch ein Sicherheitsbackup der aktuellen Datenbank im Datenordner erstellt
+- Restore-Quelle darf nicht die aktive Datenbankdatei sein
+
 Noch nicht enthalten:
 
 - Webcam-Live-Scan
@@ -210,6 +218,7 @@ Abgedeckte Bereiche:
 - PySide6-Tabellenmodell und Filter-Proxy
 - CSV-/HTML-Export
 - Datenbank-Backup
+- Datenbank-Restore mit Sicherheitsbackup
 
 Tests starten:
 
@@ -298,6 +307,12 @@ Syntaxcheck:
 - Backup-Service fuer die aktive SQLite-Datei ergaenzt
 - PySide6-Toolbar-Aktion fuer Backup erstellt
 - Tests fuer Backup-Erstellung und Sicherheitsregeln ergaenzt
+
+### Schritt 10b: Datenbank-Restore
+
+- Restore-Service mit automatischem Pre-Restore-Sicherheitsbackup ergaenzt
+- PySide6-Toolbar-Aktion fuer Restore erstellt
+- Tests fuer Restore-Erfolg und Sicherheitsregeln ergaenzt
 
 ### Schritt 11: V2-Build-Pfad
 

@@ -1,6 +1,6 @@
-from asset_manager.app import BrunelAssetManager
+from asset_manager.app import DeviceManagementApp
 
 
 if __name__ == "__main__":
-    app = BrunelAssetManager()
+    app = DeviceManagementApp()
     app.mainloop()
