@@ -23,7 +23,9 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMainWindow,
     QMessageBox,
+    QPushButton,
     QSplitter,
+    QStackedWidget,
     QStatusBar,
     QTableWidget,
     QTableWidgetItem,
@@ -53,6 +55,13 @@ def _short_date(value) -> str:
     if not value:
         return ""
     return str(value).replace("T", " ")
+
+
+def _compact_path(path: Path) -> str:
+    parts = path.parts
+    if len(parts) <= 3:
+        return str(path)
+    return f"...\\{parts[-2]}\\{parts[-1]}"
 
 
 class MetricCard(QFrame):
@@ -148,6 +157,7 @@ class DeviceManagementV2Window(QMainWindow):
         toolbar.addSeparator()
         toolbar.addAction(self.scan_action)
         self.addToolBar(toolbar)
+        self._update_action_state()
 
     def _build_ui(self) -> None:
         central = QWidget()
@@ -164,8 +174,9 @@ class DeviceManagementV2Window(QMainWindow):
         title_box.addWidget(title)
         title_box.addWidget(subtitle)
 
-        self.db_badge = QLabel(str(self.db_path))
+        self.db_badge = QLabel(f"Datenbank: {_compact_path(self.db_path)}")
         self.db_badge.setObjectName("badge")
+        self.db_badge.setToolTip(str(self.db_path))
         self.scanner_badge = QLabel("Scanner aktiv" if self.scanner_available else "Scanner inaktiv")
         self.scanner_badge.setObjectName("badgeOk" if self.scanner_available else "badgeWarn")
         badges = QVBoxLayout()
@@ -217,6 +228,9 @@ class DeviceManagementV2Window(QMainWindow):
     def _build_asset_table(self) -> QWidget:
         box = QGroupBox("Asset-Uebersicht")
         layout = QVBoxLayout(box)
+        layout.setContentsMargins(12, 14, 12, 12)
+        layout.setSpacing(8)
+        self.asset_stack = QStackedWidget()
         self.asset_table = QTableWidget(0, 8)
         self.asset_table.setHorizontalHeaderLabels(
             ["ID", "Typ", "SN / IMEI", "Modell", "Hersteller", "Status", "User", "Hostname"]
@@ -228,8 +242,51 @@ class DeviceManagementV2Window(QMainWindow):
         self.asset_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.asset_table.itemSelectionChanged.connect(self.handle_asset_selection)
         self.asset_table.doubleClicked.connect(self.edit_asset)
-        layout.addWidget(self.asset_table)
+        self.asset_stack.addWidget(self.asset_table)
+        self.asset_stack.addWidget(self._build_empty_asset_state())
+        layout.addWidget(self.asset_stack, 1)
         return box
+
+    def _build_empty_asset_state(self) -> QWidget:
+        frame = QFrame()
+        frame.setObjectName("emptyState")
+        frame.setMinimumHeight(360)
+        layout = QVBoxLayout(frame)
+        layout.setContentsMargins(42, 42, 42, 42)
+        layout.setSpacing(12)
+        layout.addStretch(1)
+
+        self.empty_title = QLabel("Noch keine Assets vorhanden")
+        self.empty_title.setObjectName("emptyTitle")
+        self.empty_title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.empty_title)
+
+        self.empty_body = QLabel(
+            "Lege das erste Geraet an oder scanne einen Barcode/QR-Code, um direkt mit einer SN / IMEI zu starten."
+        )
+        self.empty_body.setObjectName("emptyBody")
+        self.empty_body.setWordWrap(True)
+        self.empty_body.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.empty_body)
+
+        actions = QHBoxLayout()
+        actions.setSpacing(10)
+        actions.addStretch(1)
+        new_asset_button = QPushButton("Asset anlegen")
+        new_asset_button.setObjectName("primaryButton")
+        new_asset_button.clicked.connect(self.create_asset)
+        people_button = QPushButton("Personen pflegen")
+        people_button.clicked.connect(self.open_people_dialog)
+        scan_button = QPushButton("Code suchen")
+        scan_button.clicked.connect(self.scan_identifier)
+        scan_button.setEnabled(self.scanner_available)
+        actions.addWidget(new_asset_button)
+        actions.addWidget(people_button)
+        actions.addWidget(scan_button)
+        actions.addStretch(1)
+        layout.addLayout(actions)
+        layout.addStretch(2)
+        return frame
 
     def _build_detail_panel(self) -> QWidget:
         box = QGroupBox("Details")
@@ -274,10 +331,14 @@ class DeviceManagementV2Window(QMainWindow):
                 color: #ffffff;
                 border: 0;
                 border-radius: 5px;
-                padding: 7px 10px;
+                padding: 6px 10px;
             }
             QToolButton:hover, QPushButton:hover {
                 background: #123257;
+            }
+            QToolButton:disabled, QPushButton:disabled {
+                background: #c7d2de;
+                color: #64748b;
             }
             QLineEdit, QComboBox, QTextEdit, QTableWidget {
                 background: #ffffff;
@@ -308,7 +369,7 @@ class DeviceManagementV2Window(QMainWindow):
                 padding: 0 4px;
             }
             #pageTitle {
-                font-size: 25pt;
+                font-size: 23pt;
                 font-weight: 700;
                 color: #14365d;
             }
@@ -349,6 +410,26 @@ class DeviceManagementV2Window(QMainWindow):
                 background: #e9eff6;
                 color: #243247;
             }
+            #emptyState {
+                background: #ffffff;
+                border: 1px dashed #b9c7d8;
+                border-radius: 7px;
+            }
+            #emptyTitle {
+                color: #14365d;
+                font-size: 18pt;
+                font-weight: 700;
+            }
+            #emptyBody {
+                color: #5a6f86;
+                font-size: 10pt;
+            }
+            #primaryButton {
+                background: #0f766e;
+            }
+            #primaryButton:hover {
+                background: #115e59;
+            }
             """
         )
 
@@ -369,6 +450,7 @@ class DeviceManagementV2Window(QMainWindow):
         self.people_metric.set_value(status.people_count)
         self.assignment_metric.set_value(status.assignment_count)
         self.schema_metric.set_value(status.schema_version)
+        self.db_badge.setText(f"Datenbank: {_compact_path(self.db_path)}")
         self.apply_filter(keep_selection=True)
         self.sync_label.setText(f"Letzte Aktualisierung: {datetime.now().strftime('%H:%M:%S')}")
         if origin != "auto":
@@ -392,6 +474,8 @@ class DeviceManagementV2Window(QMainWindow):
             rows.append(row)
 
         self.asset_table.setRowCount(len(rows))
+        self.asset_stack.setCurrentWidget(self.asset_table if rows else self.asset_stack.widget(1))
+        matched_selected = False
         for row_index, row in enumerate(rows):
             values = [
                 row["id"],
@@ -411,12 +495,24 @@ class DeviceManagementV2Window(QMainWindow):
                 self.asset_table.setItem(row_index, column, item)
             if selected_id == row["id"]:
                 self.asset_table.selectRow(row_index)
+                matched_selected = True
 
-        if selected_id is None and rows and self.asset_table.currentRow() < 0:
+        if rows and (selected_id is None or not matched_selected):
             self.asset_table.selectRow(0)
+            self.selected_asset_id = rows[0]["id"]
+            self.update_detail_panel()
         elif not rows:
             self.selected_asset_id = None
+            if self.asset_rows:
+                self.empty_title.setText("Keine Treffer")
+                self.empty_body.setText("Passe Suche oder Statusfilter an, um wieder Assets in der Liste zu sehen.")
+            else:
+                self.empty_title.setText("Noch keine Assets vorhanden")
+                self.empty_body.setText(
+                    "Lege das erste Geraet an oder scanne einen Barcode/QR-Code, um direkt mit einer SN / IMEI zu starten."
+                )
             self.update_detail_panel()
+        self._update_action_state()
 
     def handle_asset_selection(self) -> None:
         row = self.asset_table.currentRow()
@@ -425,6 +521,7 @@ class DeviceManagementV2Window(QMainWindow):
         else:
             self.selected_asset_id = int(self.asset_table.item(row, 0).data(Qt.UserRole))
         self.update_detail_panel()
+        self._update_action_state()
 
     def selected_asset(self) -> dict | None:
         if self.selected_asset_id is None:
@@ -498,6 +595,21 @@ class DeviceManagementV2Window(QMainWindow):
             self.timeline_text.setPlainText("\n".join(lines).strip())
         else:
             self.timeline_text.setPlainText("Keine Audit-Ereignisse vorhanden.")
+
+    def _update_action_state(self) -> None:
+        has_asset = self.selected_asset_id is not None
+        has_assignment = False
+        if has_asset:
+            try:
+                has_assignment = self.selected_assignment() is not None
+            except Exception:
+                has_assignment = False
+        self.edit_asset_action.setEnabled(has_asset)
+        self.delete_asset_action.setEnabled(has_asset)
+        self.assign_action.setEnabled(has_asset)
+        self.edit_assignment_action.setEnabled(has_assignment)
+        self.return_action.setEnabled(has_assignment)
+        self.scan_action.setEnabled(self.scanner_available)
 
     def acquire_asset_claim(self, asset: dict) -> bool:
         try:
