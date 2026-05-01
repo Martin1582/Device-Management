@@ -1,0 +1,31 @@
+BRUNEL_BLUE = "#003366"
+BRUNEL_BLUE_DARK = "#0f2740"
+
+BRUNEL_ACCENT = ("#d9e8f5", "#1f3b57")
+CUSTOM_BG_COLOR = ("#dfe7ef", "#1f252c")
+PANEL_BG = ("#f4f7fb", "#2a3138")
+CARD_BG = ("#ffffff", "#303841")
+CARD_BORDER = ("#d8e1eb", "#48525c")
+TEXT_WHITE = ("#ffffff", "#ffffff")
+TEXT_PRIMARY = ("#17324d", "#f2f6fa")
+TEXT_MUTED = ("#627285", "#b1becb")
+SUCCESS_BG = ("#daf5e6", "#1f5a3b")
+SUCCESS_TEXT = ("#18633d", "#d9f2e3")
+INACTIVE_BG = ("#eef1f4", "#4b5661")
+INACTIVE_TEXT = ("#586574", "#d1d9e2")
+EMPTY_STATE_BG = ("#edf3f8", "#26313a")
+SEARCH_BG = ("#2b323a", "#182028")
+SEARCH_BORDER = ("#4a5561", "#62707d")
+WARNING_BG = ("#fde8c8", "#6b5224")
+WARNING_HOVER = ("#f6d9aa", "#84662f")
+NEUTRAL_BG = ("#dde5ee", "#45515d")
+NEUTRAL_HOVER = ("#ced9e5", "#54616e")
+DELETE_BG = ("#f7c9c4", "#7a3c36")
+DELETE_HOVER = ("#efb3ab", "#914840")
+DELETE_TEXT = ("#7b1d20", "#ffe5e2")
+RESTORE_BG = ("#f4d8d8", "#6f3d3d")
+RESTORE_HOVER = ("#e9c2c2", "#844a4a")
+
+DEVICE_TYPES = ["Smartphone", "Notebook"]
+STATUS_ACTIVE = "Aktiv"
+STATUS_INACTIVE = "Inaktiv"

@@ -1,0 +1,27 @@
+Device Management - Release Paket
+Stand: 27.04.2026
+
+Inhalt
+- DeviceManagement.exe
+- it_assets.db
+- config.json
+- BRNL.ico
+- Beispiel_Import.xlsx
+- README_Start.txt
+- README_User.md
+- README_Admin.md
+
+Wichtige Neuerungen
+- Mehrbenutzer-Stufe 1 über gemeinsame SQLite-Datei
+- Import-Vorschau für Excel-Dateien
+- Backup und Restore
+- Änderungshistorie und "Zuletzt geändert von"
+- Globale Suche, Filter, Sortierung und Detailansicht
+- Duplikat-Check und Hinweise für unvollständige Notebook-Einträge
+- Export der aktuellen Ansicht und Druckansicht
+- Dark/Light Umschalter und Statusleiste
+
+Kurzhinweise
+- Die App wird direkt über DeviceManagement.exe gestartet.
+- Optional kann über config.json eine gemeinsame zentrale SQLite-Datei genutzt werden.
+- Excel-Import erzeugt automatisch ein Importprotokoll als Textdatei.

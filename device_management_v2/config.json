@@ -1,0 +1,6 @@
+{
+  "app_name": "Device Management v2",
+  "database_path": "data/device_management_v2.db",
+  "auto_refresh_seconds": 15,
+  "theme": "Light"
+}
