@@ -34,6 +34,7 @@ Der aktuelle `v2`-Stand ist lauffaehig und umfasst:
 - PySide6-Oberflaeche mit Asset-Tabelle, Suche, Detailansicht, Zuweisungen und Timeline
 - CSV-Export und HTML-Druckansicht fuer die aktuell gefilterte Assetliste
 - Asset-Tabelle auf Qt Model/View mit Filter-Proxy umgestellt
+- Datenbank-Backup fuer die aktive SQLite-Datei
 - Dialoge fuer:
   - Asset anlegen
   - Asset bearbeiten
@@ -79,6 +80,8 @@ Der aktuelle `v2`-Stand ist lauffaehig und umfasst:
   Barcode-/QR-Code-Dekodierung aus Bilddateien
 - `dmv2/services/exporter.py`
   CSV- und HTML-Export fuer Asset-Snapshots
+- `dmv2/services/backup.py`
+  Sicherung der aktiven SQLite-Datenbank
 - `dmv2/ui/pyside_main_window.py`
   aktuelle PySide6-Hauptoberflaeche
 - `dmv2/ui/dialogs.py`
@@ -163,6 +166,11 @@ Aktuell unterstuetzt:
 - HTML-Druckansicht der aktuell gefilterten Assetliste
 - Exportwerte werden aus den v2-Asset-Snapshots erzeugt
 
+## Backup
+
+- Backup erstellt eine Kopie der aktiven SQLite-Datenbank
+- Backup-Ziel darf nicht identisch mit der aktiven Datenbankdatei sein
+
 Noch nicht enthalten:
 
 - Webcam-Live-Scan
@@ -186,6 +194,7 @@ Abgedeckte Bereiche:
 - PySide6-Dialoge
 - PySide6-Tabellenmodell und Filter-Proxy
 - CSV-/HTML-Export
+- Datenbank-Backup
 
 Tests starten:
 
@@ -268,6 +277,12 @@ Syntaxcheck:
 - CSV-Export und HTML-Druckansicht fuer die aktuelle Asset-Ansicht ergaenzt
 - Asset-Uebersicht von `QTableWidget` auf `QTableView` mit `QAbstractTableModel` und `QSortFilterProxyModel` umgestellt
 - Tests fuer Exportservice und Tabellenmodell ergaenzt
+
+### Schritt 10: Datenbank-Backup
+
+- Backup-Service fuer die aktive SQLite-Datei ergaenzt
+- PySide6-Toolbar-Aktion fuer Backup erstellt
+- Tests fuer Backup-Erstellung und Sicherheitsregeln ergaenzt
 
 ## Naechste sinnvolle Schritte
 

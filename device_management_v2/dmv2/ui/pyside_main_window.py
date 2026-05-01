@@ -37,6 +37,7 @@ from PySide6.QtWidgets import (
 
 from ..config import load_config, resolve_database_path
 from ..db.repository import ConflictError, DatabaseRepository, EditClaimError
+from ..services.backup import build_backup_filename, create_database_backup
 from ..services.exporter import (
     build_export_filename,
     export_asset_snapshots_to_csv,
@@ -154,6 +155,8 @@ class DeviceManagementV2Window(QMainWindow):
         self.export_csv_action.triggered.connect(self.export_current_view_to_csv)
         self.print_html_action = QAction("Druckansicht", self)
         self.print_html_action.triggered.connect(self.export_current_view_to_html)
+        self.backup_action = QAction("Backup", self)
+        self.backup_action.triggered.connect(self.backup_database)
 
         toolbar = QToolBar("Hauptaktionen")
         toolbar.setMovable(False)
@@ -172,6 +175,8 @@ class DeviceManagementV2Window(QMainWindow):
         toolbar.addSeparator()
         toolbar.addAction(self.export_csv_action)
         toolbar.addAction(self.print_html_action)
+        toolbar.addSeparator()
+        toolbar.addAction(self.backup_action)
         self.addToolBar(toolbar)
         self._update_action_state()
 
@@ -837,6 +842,22 @@ class DeviceManagementV2Window(QMainWindow):
             QMessageBox.critical(self, "Druckansicht", str(exc))
             return
         self.status_label.setText(f"Druckansicht gespeichert: {Path(file_path).name}")
+
+    def backup_database(self) -> None:
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Datenbank-Backup erstellen",
+            build_backup_filename(),
+            "SQLite-Datenbanken (*.db);;Alle Dateien (*.*)",
+        )
+        if not file_path:
+            return
+        try:
+            create_database_backup(self.db_path, file_path)
+        except Exception as exc:
+            QMessageBox.critical(self, "Backup", str(exc))
+            return
+        self.status_label.setText(f"Backup erstellt: {Path(file_path).name}")
 
 
 def run():
