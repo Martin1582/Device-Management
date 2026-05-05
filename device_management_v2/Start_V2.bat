@@ -1,24 +1,58 @@
 @echo off
-setlocal
+setlocal EnableExtensions
 
 set "SCRIPT_DIR=%~dp0"
 cd /d "%SCRIPT_DIR%"
 
-set "PYTHON_EXE=..\.venv\Scripts\python.exe"
+set "VENV_DIR=%SCRIPT_DIR%.venv"
+set "PYTHON_EXE=%VENV_DIR%\Scripts\python.exe"
+
 if exist "%PYTHON_EXE%" (
     "%PYTHON_EXE%" --version >nul 2>nul
     if errorlevel 1 set "PYTHON_EXE="
 )
 
-if "%PYTHON_EXE%"=="" if exist "%LOCALAPPDATA%\Programs\Python\Python313\python.exe" (
-    set "PYTHON_EXE=%LOCALAPPDATA%\Programs\Python\Python313\python.exe"
+if "%PYTHON_EXE%"=="" (
+    call :find_base_python
+    if "%BASE_PYTHON%"=="" (
+        echo Keine funktionierende Python-Installation gefunden.
+        echo Bitte Python 3.13 oder neuer installieren und danach erneut Start.bat ausfuehren.
+        pause
+        exit /b 1
+    )
+
+    echo Erstelle lokale Python-Umgebung fuer Device Management v2...
+    "%BASE_PYTHON%" -m venv --clear "%VENV_DIR%"
+    if errorlevel 1 (
+        echo Die lokale Python-Umgebung konnte nicht erstellt werden.
+        pause
+        exit /b 1
+    )
+    set "PYTHON_EXE=%VENV_DIR%\Scripts\python.exe"
 )
 
-if "%PYTHON_EXE%"=="" (
-    echo Keine funktionierende Python-Umgebung gefunden.
-    echo Erwartet wurde entweder ..\.venv\Scripts\python.exe oder %%LOCALAPPDATA%%\Programs\Python\Python313\python.exe
+if not exist "%PYTHON_EXE%" (
+    echo Die lokale Python-Umgebung ist unvollstaendig.
     pause
     exit /b 1
+)
+
+"%PYTHON_EXE%" -c "import PySide6, openpyxl, PIL, zxingcpp" >nul 2>nul
+if errorlevel 1 (
+    echo Installiere benoetigte Python-Pakete...
+    "%PYTHON_EXE%" -m pip install --upgrade pip
+    if errorlevel 1 (
+        echo pip konnte nicht aktualisiert werden.
+        pause
+        exit /b 1
+    )
+    "%PYTHON_EXE%" -m pip install -r requirements-runtime.txt
+    if errorlevel 1 (
+        echo Die benoetigten Python-Pakete konnten nicht installiert werden.
+        echo Bitte Internetverbindung pruefen und Start.bat erneut ausfuehren.
+        pause
+        exit /b 1
+    )
 )
 
 "%PYTHON_EXE%" main.py
@@ -31,3 +65,19 @@ if not "%EXIT_CODE%"=="0" (
 )
 
 exit /b %EXIT_CODE%
+
+:find_base_python
+set "BASE_PYTHON="
+if exist "%LOCALAPPDATA%\Programs\Python\Python313\python.exe" (
+    set "BASE_PYTHON=%LOCALAPPDATA%\Programs\Python\Python313\python.exe"
+    exit /b 0
+)
+for /f "delims=" %%P in ('py -3 -c "import sys; print(sys.executable)" 2^>nul') do (
+    set "BASE_PYTHON=%%P"
+    exit /b 0
+)
+for /f "delims=" %%P in ('python -c "import sys; print(sys.executable)" 2^>nul') do (
+    set "BASE_PYTHON=%%P"
+    exit /b 0
+)
+exit /b 0

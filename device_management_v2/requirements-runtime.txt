@@ -1,6 +1,4 @@
 PySide6
-customtkinter
 openpyxl
 pillow
 zxing-cpp
-PyInstaller

@@ -14,10 +14,19 @@ Empfohlener Start:
 Start_V2.bat
 ```
 
-Alternativ:
+Beim ersten Start auf einem neuen Geraet erstellt `Start_V2.bat` automatisch eine lokale Umgebung unter
+`device_management_v2\.venv` und installiert die benoetigten Pakete aus `requirements-runtime.txt`.
+
+Voraussetzungen auf dem Zielgeraet:
+
+- Windows
+- Python 3.13 oder neuer
+- Internetzugang beim ersten Start, falls die Pakete noch nicht lokal installiert sind
+
+Alternativ fuer Entwickler:
 
 ```powershell
-..\.venv\Scripts\python.exe main.py
+.\.venv\Scripts\python.exe main.py
 ```
 
 Hinweis:
@@ -61,11 +70,13 @@ Der aktuelle `v2`-Stand ist lauffaehig und umfasst:
 - `main.py`
   Startpunkt fuer die lokale Entwicklung
 - `Start_V2.bat`
-  empfohlener Windows-Start ueber die vorhandene `.venv`
+  empfohlener Windows-Start mit automatisch erstellter lokaler `.venv`
 - `config.json`
   lokale Entwicklungs-Konfiguration
 - `requirements.txt`
-  Python-Abhaengigkeiten fuer `v2`
+  Python-Abhaengigkeiten fuer Entwicklung und Build
+- `requirements-runtime.txt`
+  minimale Python-Abhaengigkeiten fuer den portablen Start
 - `dmv2/bootstrap.py`
   App-Start
 - `dmv2/config.py`
@@ -196,13 +207,13 @@ Abgedeckte Bereiche:
 Tests starten:
 
 ```powershell
-..\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v
 ```
 
 Syntaxcheck:
 
 ```powershell
-..\.venv\Scripts\python.exe -m py_compile main.py dmv2\bootstrap.py dmv2\config.py dmv2\constants.py dmv2\db\migrations.py dmv2\db\repository.py dmv2\services\scanner.py dmv2\ui\main_window.py tests\test_config.py tests\test_repository.py tests\test_scanner.py
+.\.venv\Scripts\python.exe -m py_compile main.py dmv2\bootstrap.py dmv2\config.py dmv2\constants.py dmv2\db\migrations.py dmv2\db\repository.py dmv2\services\scanner.py dmv2\ui\pyside_main_window.py tests\test_config.py tests\test_repository.py tests\test_scanner.py
 ```
 
 ## Entwicklungsprotokoll
