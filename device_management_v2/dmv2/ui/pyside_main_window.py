@@ -48,8 +48,9 @@ from ..services.exporter import (
     export_asset_snapshots_to_csv,
     export_asset_snapshots_to_html,
 )
+from ..services.importer import build_import_preview, import_preview_rows
 from ..services.scanner import decode_identifier_from_file, scanner_runtime_available
-from .dialogs import AssignmentDialog, AssetDialog, PeopleDialog
+from .dialogs import AssignmentDialog, AssetDialog, ImportPreviewDialog, PeopleDialog
 from .models import AssetFilterProxyModel, AssetTableModel
 
 
@@ -143,6 +144,8 @@ class DeviceManagementV2Window(QMainWindow):
         self.refresh_action.triggered.connect(lambda: self.refresh_view(origin="manual"))
         self.new_asset_action = QAction("Asset neu", self)
         self.new_asset_action.triggered.connect(self.create_asset)
+        self.import_action = QAction("Import", self)
+        self.import_action.triggered.connect(self.import_assets)
         self.edit_asset_action = QAction("Asset bearbeiten", self)
         self.edit_asset_action.triggered.connect(self.edit_asset)
         self.delete_asset_action = QAction("Asset loeschen", self)
@@ -171,6 +174,7 @@ class DeviceManagementV2Window(QMainWindow):
         toolbar.addAction(self.refresh_action)
         toolbar.addSeparator()
         toolbar.addAction(self.new_asset_action)
+        toolbar.addAction(self.import_action)
         toolbar.addAction(self.edit_asset_action)
         toolbar.addAction(self.delete_asset_action)
         toolbar.addSeparator()
@@ -648,6 +652,49 @@ class DeviceManagementV2Window(QMainWindow):
             QMessageBox.critical(self, "Asset anlegen", str(exc))
             return
         self.status_label.setText("Asset angelegt.")
+        self.refresh_view(origin="local-write")
+
+    def import_assets(self) -> None:
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Asset-Import auswaehlen",
+            "",
+            "Importdateien (*.xlsx *.csv);;Excel-Dateien (*.xlsx);;CSV-Dateien (*.csv);;Alle Dateien (*.*)",
+        )
+        if not file_path:
+            return
+        try:
+            preview = build_import_preview(file_path, self.repository)
+        except Exception as exc:
+            QMessageBox.critical(self, "Import-Vorschau", str(exc))
+            return
+        if preview.total_count == 0:
+            QMessageBox.information(self, "Import-Vorschau", "Die Datei enthaelt keine importierbaren Datenzeilen.")
+            return
+
+        dialog = ImportPreviewDialog(self, preview)
+        if dialog.exec() != QDialog.Accepted:
+            return
+        summary = import_preview_rows(preview, self.repository, actor="pyside-ui")
+        if summary.errors:
+            QMessageBox.warning(
+                self,
+                "Import abgeschlossen",
+                "Der Import wurde mit Fehlern abgeschlossen.\n\n" + "\n".join(summary.errors[:8]),
+            )
+        else:
+            QMessageBox.information(
+                self,
+                "Import abgeschlossen",
+                (
+                    f"Assets angelegt: {summary.created_assets}\n"
+                    f"Zuweisungen angelegt: {summary.created_assignments}\n"
+                    f"Uebersprungen: {summary.skipped}"
+                ),
+            )
+        self.status_label.setText(
+            f"Import abgeschlossen: {summary.created_assets} Assets, {summary.skipped} uebersprungen."
+        )
         self.refresh_view(origin="local-write")
 
     def edit_asset(self) -> None:

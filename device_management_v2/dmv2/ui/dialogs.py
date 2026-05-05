@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 )
 
 from ..db.repository import ConflictError, DatabaseRepository
+from ..services.importer import ImportPreview
 
 
 DEVICE_TYPES = ("Notebook", "Smartphone")
@@ -257,6 +258,88 @@ class PeopleDialog(QDialog):
             QMessageBox.critical(self, "Person", str(exc))
             return
         self.refresh()
+
+
+class ImportPreviewDialog(QDialog):
+    def __init__(self, parent, preview: ImportPreview):
+        super().__init__(parent)
+        self.preview = preview
+        self.setWindowTitle("Import-Vorschau")
+        self.resize(1120, 620)
+
+        summary = QLabel(
+            " | ".join(
+                [
+                    f"Datei: {preview.source_path.name}",
+                    f"Zeilen: {preview.total_count}",
+                    f"Importierbar: {preview.importable_count}",
+                    f"Duplikate: {preview.duplicate_count}",
+                    f"Fehler: {preview.error_count}",
+                ]
+            )
+        )
+        summary.setObjectName("notice")
+        summary.setWordWrap(True)
+
+        self.table = QTableWidget(0, 10)
+        self.table.setHorizontalHeaderLabels(
+            [
+                "Status",
+                "Zeile",
+                "Typ",
+                "SN / IMEI",
+                "Modell",
+                "Hersteller",
+                "Inventarstatus",
+                "User",
+                "Hostname",
+                "Hinweis",
+            ]
+        )
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self._fill_table()
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel)
+        self.import_button = buttons.addButton("Import ausfuehren", QDialogButtonBox.ButtonRole.AcceptRole)
+        self.import_button.setEnabled(preview.importable_count > 0)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(summary)
+        layout.addWidget(self.table, 1)
+        layout.addWidget(buttons)
+
+    def _fill_table(self) -> None:
+        self.table.setRowCount(len(self.preview.rows))
+        for row_index, import_row in enumerate(self.preview.rows):
+            values = [
+                self._status_label(import_row.status),
+                import_row.row_number,
+                import_row.device_type,
+                import_row.asset_tag,
+                import_row.model_name,
+                import_row.manufacturer,
+                import_row.inventory_status,
+                import_row.assigned_to,
+                import_row.hostname,
+                import_row.message_text or "Bereit fuer Import",
+            ]
+            for column, value in enumerate(values):
+                item = QTableWidgetItem(_text(value))
+                item.setData(Qt.UserRole, import_row.status)
+                self.table.setItem(row_index, column, item)
+
+    def _status_label(self, status: str) -> str:
+        if status == "ok":
+            return "OK"
+        if status == "duplicate":
+            return "Duplikat"
+        return "Fehler"
 
     def delete_person(self) -> None:
         person = self.selected_person()

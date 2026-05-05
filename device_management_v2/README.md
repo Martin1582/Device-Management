@@ -23,18 +23,6 @@ Alternativ:
 Hinweis:
 Die App startet auch ueber `python main.py`, selbst wenn die Scanner-Abhaengigkeiten auf diesem Python-Pfad fehlen. In diesem Fall bleiben Barcode- und QR-Funktionen deaktiviert.
 
-## Build
-
-Empfohlener Build fuer V2:
-
-```powershell
-Build_V2.bat
-```
-
-Der Build nutzt `DeviceManagementV2.spec` und erzeugt eine PySide6-basierte `DeviceManagementV2.exe`.
-PyInstaller muss in der verwendeten Python-Umgebung installiert sein.
-Das neutrale App-Icon liegt unter `..\assets\app_icon.*`.
-
 ## Aktueller Stand
 
 Der aktuelle `v2`-Stand ist lauffaehig und umfasst:
@@ -43,11 +31,7 @@ Der aktuelle `v2`-Stand ist lauffaehig und umfasst:
 - Schema-Versionierung bis `Version 3`
 - Legacy-Migration aus der bisherigen `assets`-Tabelle
 - Repository-Schicht fuer Assets, Personen, Zuweisungen und Audit-Timeline
-- PySide6-Oberflaeche mit Asset-Tabelle, Suche, Detailansicht, Zuweisungen und Timeline
-- CSV-Export und HTML-Druckansicht fuer die aktuell gefilterte Assetliste
-- Asset-Tabelle auf Qt Model/View mit Filter-Proxy umgestellt
-- Datenbank-Backup fuer die aktive SQLite-Datei
-- Datenbank-Restore mit automatischem Sicherheitsbackup vor dem Ueberschreiben
+- erste echte `v2`-Oberflaeche mit Asset-Liste, Suche, Detailansicht und Timeline
 - Dialoge fuer:
   - Asset anlegen
   - Asset bearbeiten
@@ -59,6 +43,9 @@ Der aktuelle `v2`-Stand ist lauffaehig und umfasst:
   - Rueckgabe eines Geraets
 - Scan-Unterstuetzung fuer `SN` bzw. `SN / IMEI` ueber Barcode- oder QR-Code-Bild
 - Scan-Suche, um Geraete ueber Barcode/QR direkt zu finden
+- CSV-/XLSX-Import mit Vorschau, Validierung und Duplikatpruefung vor dem Schreiben in die Datenbank
+- CSV-Export und HTML-Druckansicht fuer die aktuelle Asset-Liste
+- Datenbank-Backup und Restore mit automatischem Sicherheitsbackup
 
 ## Fachliche Regeln
 
@@ -74,11 +61,7 @@ Der aktuelle `v2`-Stand ist lauffaehig und umfasst:
 - `main.py`
   Startpunkt fuer die lokale Entwicklung
 - `Start_V2.bat`
-  empfohlener Windows-Start; nutzt eine funktionierende `.venv` oder den lokalen Python 3.13 unter `%LOCALAPPDATA%`
-- `Build_V2.bat`
-  Windows-Build ueber PyInstaller
-- `DeviceManagementV2.spec`
-  PyInstaller-Konfiguration fuer die PySide6-basierte V2
+  empfohlener Windows-Start ueber die vorhandene `.venv`
 - `config.json`
   lokale Entwicklungs-Konfiguration
 - `requirements.txt`
@@ -95,20 +78,18 @@ Der aktuelle `v2`-Stand ist lauffaehig und umfasst:
   Datenzugriff und fachliche Workflows
 - `dmv2/services/scanner.py`
   Barcode-/QR-Code-Dekodierung aus Bilddateien
+- `dmv2/services/importer.py`
+  CSV-/XLSX-Import mit Vorschau, Validierung und kontrolliertem Schreiben
 - `dmv2/services/exporter.py`
-  CSV- und HTML-Export fuer Asset-Snapshots
+  CSV-Export und HTML-Druckansicht
 - `dmv2/services/backup.py`
-  Sicherung der aktiven SQLite-Datenbank
-- `dmv2/ui/pyside_main_window.py`
-  aktuelle PySide6-Hauptoberflaeche
-- `dmv2/ui/dialogs.py`
-  PySide6-Dialoge fuer Assets, Personen, Personenverwaltung und Zuweisungen
-- `dmv2/ui/models.py`
-  Qt-Tabellenmodell und Filter-Proxy fuer die Asset-Uebersicht
+  Backup und Restore der SQLite-Datenbank
 - `dmv2/ui/main_window.py`
-  alte customtkinter-Oberflaeche als Referenzbestand
+  bisherige `v2`-Oberflaeche
+- `dmv2/ui/pyside_main_window.py`
+  aktuelle PySide6-Oberflaeche
 - `tests/`
-  Tests fuer Konfiguration, Migrationen, Repository und Scanner
+  Tests fuer Konfiguration, Migrationen, Repository, Import, Export, Backup, UI-Modelle und Scanner
 
 ## Datenmodell
 
@@ -164,6 +145,16 @@ Der aktuelle `v2`-Stand ist lauffaehig und umfasst:
 - bestehende aktive Zuweisung bearbeiten
 - Geraet rueckgeben
 
+### Import
+
+- unterstuetzt CSV- und XLSX-Dateien
+- erwartet mindestens `SN / IMEI` und `Modell`
+- erkennt u. a. `Typ`, `Hersteller`, `Status`, `User`, `Hostname`, `Notizen` und `Quelle`
+- zeigt vor dem Import alle Zeilen mit Status `OK`, `Duplikat` oder `Fehler`
+- schreibt erst nach ausdruecklicher Bestaetigung in die Datenbank
+- ueberspringt Duplikate und fehlerhafte Zeilen
+- legt bei gueltigem `User` und/oder `Hostname` direkt eine aktive Zuweisung an
+
 ## Scanner-Funktion
 
 Die Scan-Funktion nutzt:
@@ -177,23 +168,6 @@ Aktuell unterstuetzt:
 - Uebernahme der erkannten Kennung in den Asset-Dialog
 - Suche nach Asset ueber gescannten Code
 
-## Export
-
-- CSV-Export der aktuell gefilterten Assetliste
-- HTML-Druckansicht der aktuell gefilterten Assetliste
-- Exportwerte werden aus den v2-Asset-Snapshots erzeugt
-
-## Backup
-
-- Backup erstellt eine Kopie der aktiven SQLite-Datenbank
-- Backup-Ziel darf nicht identisch mit der aktiven Datenbankdatei sein
-
-## Restore
-
-- Restore ersetzt die aktive SQLite-Datenbank durch eine ausgewaehlte Backup-Datei
-- vor dem Restore wird automatisch ein Sicherheitsbackup der aktuellen Datenbank im Datenordner erstellt
-- Restore-Quelle darf nicht die aktive Datenbankdatei sein
-
 Noch nicht enthalten:
 
 - Webcam-Live-Scan
@@ -202,7 +176,7 @@ Noch nicht enthalten:
 
 Aktueller Teststand:
 
-- `33` automatisierte Tests
+- `57` automatisierte Tests
 
 Abgedeckte Bereiche:
 
@@ -213,12 +187,11 @@ Abgedeckte Bereiche:
 - Personenregeln
 - Asset-Regeln
 - Zuweisungen
+- Import-Vorschau und Importausfuehrung
+- Export
+- Backup und Restore
+- PySide6-Dialoge und Tabellenmodelle
 - Scanner-Service
-- PySide6-Dialoge
-- PySide6-Tabellenmodell und Filter-Proxy
-- CSV-/HTML-Export
-- Datenbank-Backup
-- Datenbank-Restore mit Sicherheitsbackup
 
 Tests starten:
 
@@ -229,7 +202,7 @@ Tests starten:
 Syntaxcheck:
 
 ```powershell
-..\.venv\Scripts\python.exe -m py_compile main.py dmv2\bootstrap.py dmv2\config.py dmv2\db\migrations.py dmv2\db\repository.py dmv2\services\scanner.py dmv2\ui\pyside_main_window.py tests\test_config.py tests\test_repository.py tests\test_scanner.py
+..\.venv\Scripts\python.exe -m py_compile main.py dmv2\bootstrap.py dmv2\config.py dmv2\constants.py dmv2\db\migrations.py dmv2\db\repository.py dmv2\services\scanner.py dmv2\ui\main_window.py tests\test_config.py tests\test_repository.py tests\test_scanner.py
 ```
 
 ## Entwicklungsprotokoll
@@ -287,43 +260,10 @@ Syntaxcheck:
 - Scan-Suche ueber die Hauptsuche
 - Fallback-Verhalten, wenn Scanner-Abhaengigkeiten fehlen
 
-### Schritt 8: PySide6-Umbau
-
-- Startpunkt von customtkinter auf PySide6 umgestellt
-- neue Hauptoberflaeche mit nativer Toolbar, Asset-Tabelle, Detail-Tabs und Personenverwaltung
-- Dialoge in ein eigenes UI-Modul ausgelagert
-- Smoke-Tests fuer zentrale Dialogwerte ergaenzt
-- vorhandene Repository-, Migrations- und Scanner-Schicht beibehalten
-- `Start_V2.bat` robuster gegen eine nicht portable `.venv` gemacht
-
-### Schritt 9: V2-Export und Tabellenmodell
-
-- CSV-Export und HTML-Druckansicht fuer die aktuelle Asset-Ansicht ergaenzt
-- Asset-Uebersicht von `QTableWidget` auf `QTableView` mit `QAbstractTableModel` und `QSortFilterProxyModel` umgestellt
-- Tests fuer Exportservice und Tabellenmodell ergaenzt
-
-### Schritt 10: Datenbank-Backup
-
-- Backup-Service fuer die aktive SQLite-Datei ergaenzt
-- PySide6-Toolbar-Aktion fuer Backup erstellt
-- Tests fuer Backup-Erstellung und Sicherheitsregeln ergaenzt
-
-### Schritt 10b: Datenbank-Restore
-
-- Restore-Service mit automatischem Pre-Restore-Sicherheitsbackup ergaenzt
-- PySide6-Toolbar-Aktion fuer Restore erstellt
-- Tests fuer Restore-Erfolg und Sicherheitsregeln ergaenzt
-
-### Schritt 11: V2-Build-Pfad
-
-- eigene PyInstaller-Spec fuer V2 ergaenzt
-- Build-Batch fuer V2 ergaenzt
-- V2-Build vom alten v1-Build getrennt
-
 ## Naechste sinnvolle Schritte
 
 - Webcam-Scan
 - Konflikterkennung fuer parallele Bearbeitung
-- PySide6-UI weiter in Model/View-Tabellen und eigene Dialogmodule aufteilen
+- noch sauberere Modultrennung der UI
 - Export- und Reporting-Funktionen in `v2`
-- Build testweise ausfuehren und Release-Ordner fuer `v2` definieren
+- Release-/Build-Pfad fuer `v2`
