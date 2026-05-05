@@ -25,6 +25,14 @@ class ConfigAndRepositoryTest(unittest.TestCase):
         self.assertEqual(config["app_name"], "Device Management v2")
         self.assertEqual(config["theme"], "Light")
 
+    def test_load_config_accepts_utf8_bom(self):
+        config_path = self.temp_dir / "config.json"
+        config_path.write_text('{"app_name": "BOM Test"}', encoding="utf-8-sig")
+
+        config = load_config(config_path)
+
+        self.assertEqual(config["app_name"], "BOM Test")
+
     def test_resolve_database_path_returns_absolute_path(self):
         config = {"database_path": "data/example.db"}
 

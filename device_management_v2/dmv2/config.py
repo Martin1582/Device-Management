@@ -26,7 +26,7 @@ def load_config(config_path=None):
     if not path.exists():
         return DEFAULT_CONFIG.copy()
 
-    with path.open("r", encoding="utf-8") as handle:
+    with path.open("r", encoding="utf-8-sig") as handle:
         raw_data = json.load(handle)
 
     config = DEFAULT_CONFIG.copy()
