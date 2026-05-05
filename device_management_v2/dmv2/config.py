@@ -1,8 +1,15 @@
 import json
+import sys
 from pathlib import Path
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+def get_base_dir():
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent.parent
+
+
+BASE_DIR = get_base_dir()
 CONFIG_PATH = BASE_DIR / "config.json"
 
 

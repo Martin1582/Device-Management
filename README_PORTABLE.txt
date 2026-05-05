@@ -6,9 +6,12 @@ So gibst du die App an ein anderes Windows-Geraet weiter:
 2. Stelle sicher, dass Python 3.13 oder neuer installiert ist.
 3. Starte im Hauptordner die Datei "Start.bat".
 
+Wenn eine "DeviceManagementV2.exe" im Ordner liegt, startet "Start.bat" diese
+direkt. Dann muss auf dem Zielgeraet kein Python installiert sein.
+
 Was beim ersten Start passiert:
 
-- Die App erstellt automatisch eine lokale Python-Umgebung unter
+- Falls keine EXE vorhanden ist, erstellt die App automatisch eine lokale Python-Umgebung unter
   "device_management_v2\.venv".
 - Danach werden die benoetigten Pakete aus "device_management_v2\requirements-runtime.txt"
   installiert.
