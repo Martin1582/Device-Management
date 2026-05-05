@@ -6,7 +6,7 @@ import unittest
 from contextlib import closing
 from pathlib import Path
 
-from dmv2.config import load_config, resolve_database_path
+from dmv2.config import load_config, normalize_database_path_for_config, resolve_database_path, save_config
 from dmv2.db.migrations import SCHEMA_VERSION
 from dmv2.db.repository import DatabaseRepository
 
@@ -32,6 +32,21 @@ class ConfigAndRepositoryTest(unittest.TestCase):
         config = load_config(config_path)
 
         self.assertEqual(config["app_name"], "BOM Test")
+
+    def test_save_config_writes_loadable_utf8_json(self):
+        config_path = self.temp_dir / "config.json"
+
+        save_config({"app_name": "Gespeichert", "auto_refresh_seconds": 30}, config_path)
+        config = load_config(config_path)
+
+        self.assertEqual(config["app_name"], "Gespeichert")
+        self.assertEqual(config["auto_refresh_seconds"], 30)
+        self.assertEqual(config["database_path"], "data/device_management_v2.db")
+
+    def test_normalize_database_path_keeps_relative_paths_portable(self):
+        path = normalize_database_path_for_config("data/custom.db")
+
+        self.assertEqual(path, "data/custom.db")
 
     def test_resolve_database_path_returns_absolute_path(self):
         config = {"database_path": "data/example.db"}

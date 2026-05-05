@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
     QDialogButtonBox,
+    QFileDialog,
     QFormLayout,
     QHBoxLayout,
     QLabel,
@@ -14,6 +15,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QHeaderView,
+    QSpinBox,
     QTableWidget,
     QTableWidgetItem,
     QTextEdit,
@@ -276,6 +278,66 @@ class PeopleDialog(QDialog):
             QMessageBox.critical(self, "Person", str(exc))
             return
         self.refresh()
+
+
+class SettingsDialog(QDialog):
+    def __init__(self, parent, config: dict, database_path):
+        super().__init__(parent)
+        self.setWindowTitle("Einstellungen")
+        self.setMinimumWidth(620)
+
+        self.database_path_edit = QLineEdit(str(database_path))
+        database_browse_button = QPushButton("Auswaehlen")
+        database_browse_button.clicked.connect(self.select_database_path)
+
+        database_row = QHBoxLayout()
+        database_row.addWidget(self.database_path_edit, 1)
+        database_row.addWidget(database_browse_button)
+
+        self.auto_refresh_spin = QSpinBox()
+        self.auto_refresh_spin.setRange(5, 3600)
+        self.auto_refresh_spin.setSuffix(" Sekunden")
+        self.auto_refresh_spin.setValue(max(int(config.get("auto_refresh_seconds", 15)), 5))
+
+        self.theme_combo = QComboBox()
+        self.theme_combo.addItem("Dark")
+        self.theme_combo.setEnabled(False)
+
+        form = QFormLayout()
+        form.addRow("Datenbank", database_row)
+        form.addRow("Auto-Refresh", self.auto_refresh_spin)
+        form.addRow("Theme", self.theme_combo)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
+        layout = QVBoxLayout(self)
+        layout.addLayout(form)
+        layout.addWidget(buttons)
+
+    def select_database_path(self) -> None:
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Datenbank auswaehlen",
+            self.database_path_edit.text().strip(),
+            "SQLite-Datenbanken (*.db);;Alle Dateien (*.*)",
+        )
+        if file_path:
+            self.database_path_edit.setText(file_path)
+
+    def accept(self) -> None:
+        if not self.database_path_edit.text().strip():
+            QMessageBox.warning(self, "Einstellungen", "Bitte einen Datenbankpfad angeben.")
+            return
+        super().accept()
+
+    def values(self) -> dict:
+        return {
+            "database_path": self.database_path_edit.text().strip(),
+            "auto_refresh_seconds": self.auto_refresh_spin.value(),
+            "theme": self.theme_combo.currentText(),
+        }
 
 
 class ImportPreviewDialog(QDialog):

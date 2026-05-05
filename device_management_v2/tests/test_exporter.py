@@ -7,6 +7,7 @@ from dmv2.services.exporter import (
     build_export_filename,
     export_asset_snapshots_to_csv,
     export_asset_snapshots_to_html,
+    export_import_template,
 )
 
 
@@ -64,10 +65,39 @@ class ExporterTest(unittest.TestCase):
         self.assertIn("Keine Assets in der aktuellen Ansicht.", html)
         self.assertIn("Eintraege: 0", html)
 
+    def test_export_asset_snapshots_to_html_writes_filter_summary(self):
+        output_path = self.output_dir / "filtered.html"
+
+        export_asset_snapshots_to_html(
+            self.rows,
+            output_path,
+            filter_summary="Suche: NB-001 | Status: active",
+        )
+
+        html = output_path.read_text(encoding="utf-8")
+        self.assertIn("Filter: Suche: NB-001 | Status: active", html)
+
+    def test_export_import_template_writes_xlsx_headers(self):
+        from openpyxl import load_workbook
+
+        output_path = self.output_dir / "importvorlage.xlsx"
+
+        export_import_template(output_path)
+
+        workbook = load_workbook(output_path, read_only=True)
+        try:
+            worksheet = workbook.active
+            headers = [cell.value for cell in next(worksheet.iter_rows(max_row=1))]
+        finally:
+            workbook.close()
+
+        self.assertEqual(headers[:4], ["Typ", "SN / IMEI", "Modell", "Hersteller"])
+        self.assertIn("Hostname", headers)
+
     def test_build_export_filename_uses_extension_without_double_dot(self):
         filename = build_export_filename(".csv")
 
-        self.assertTrue(filename.startswith("DeviceManagementV2_Assets_"))
+        self.assertTrue(filename.startswith("DeviceManagementV2_Devices_"))
         self.assertTrue(filename.endswith(".csv"))
         self.assertNotIn("..csv", filename)
 

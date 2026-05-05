@@ -35,7 +35,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ..config import load_config, resolve_database_path
+from ..config import load_config, normalize_database_path_for_config, resolve_database_path, save_config
 from ..db.repository import ConflictError, DatabaseRepository, EditClaimError
 from ..services.backup import (
     build_backup_filename,
@@ -47,10 +47,11 @@ from ..services.exporter import (
     build_export_filename,
     export_asset_snapshots_to_csv,
     export_asset_snapshots_to_html,
+    export_import_template,
 )
 from ..services.importer import build_import_preview, import_preview_rows
 from ..services.scanner import decode_identifier_from_file, scanner_runtime_available
-from .dialogs import AssignmentDialog, AssetDialog, ImportPreviewDialog, PeopleDialog
+from .dialogs import AssignmentDialog, AssetDialog, ImportPreviewDialog, PeopleDialog, SettingsDialog
 from .models import AssetFilterProxyModel, AssetTableModel
 from .theme import apply_pyside_theme
 
@@ -136,7 +137,7 @@ class DeviceManagementV2Window(QMainWindow):
         self.refresh_view()
         self.auto_refresh_timer = QTimer(self)
         self.auto_refresh_timer.timeout.connect(lambda: self.refresh_view(origin="auto"))
-        self.auto_refresh_timer.start(max(int(self.config_data.get("auto_refresh_seconds", 15)), 5) * 1000)
+        self.auto_refresh_timer.start(self._auto_refresh_interval_ms())
 
     def _resource_path(self, filename: str) -> Path:
         local_root = Path(__file__).resolve().parents[2]
@@ -159,6 +160,8 @@ class DeviceManagementV2Window(QMainWindow):
         self.new_asset_action.triggered.connect(self.create_asset)
         self.import_action = QAction("Import", self)
         self.import_action.triggered.connect(self.import_assets)
+        self.import_template_action = QAction("Importvorlage", self)
+        self.import_template_action.triggered.connect(self.export_import_template_file)
         self.edit_asset_action = QAction("Device bearbeiten", self)
         self.edit_asset_action.triggered.connect(self.edit_asset)
         self.delete_asset_action = QAction("Device loeschen", self)
@@ -181,6 +184,8 @@ class DeviceManagementV2Window(QMainWindow):
         self.backup_action.triggered.connect(self.backup_database)
         self.restore_action = QAction("Restore", self)
         self.restore_action.triggered.connect(self.restore_database)
+        self.settings_action = QAction("Einstellungen", self)
+        self.settings_action.triggered.connect(self.open_settings_dialog)
 
         toolbar = QToolBar("Hauptaktionen")
         toolbar.setMovable(False)
@@ -188,6 +193,7 @@ class DeviceManagementV2Window(QMainWindow):
         toolbar.addSeparator()
         toolbar.addAction(self.new_asset_action)
         toolbar.addAction(self.import_action)
+        toolbar.addAction(self.import_template_action)
         toolbar.addAction(self.edit_asset_action)
         toolbar.addAction(self.delete_asset_action)
         toolbar.addSeparator()
@@ -203,8 +209,14 @@ class DeviceManagementV2Window(QMainWindow):
         toolbar.addSeparator()
         toolbar.addAction(self.backup_action)
         toolbar.addAction(self.restore_action)
+        toolbar.addSeparator()
+        toolbar.addAction(self.settings_action)
         self.addToolBar(toolbar)
         self._update_action_state()
+
+    def _auto_refresh_interval_ms(self) -> int:
+        seconds = max(int(self.config_data.get("auto_refresh_seconds", 15)), 5)
+        return seconds * 1000
 
     def _build_ui(self) -> None:
         central = QWidget()
@@ -365,6 +377,38 @@ class DeviceManagementV2Window(QMainWindow):
 
     def show_database_path(self) -> None:
         QMessageBox.information(self, "Datenbank", str(self.db_path))
+
+    def open_settings_dialog(self) -> None:
+        dialog = SettingsDialog(self, self.config_data, self.db_path)
+        if dialog.exec() != QDialog.Accepted:
+            return
+
+        values = dialog.values()
+        updated_config = self.config_data.copy()
+        updated_config.update(
+            {
+                "database_path": normalize_database_path_for_config(values["database_path"]),
+                "auto_refresh_seconds": values["auto_refresh_seconds"],
+                "theme": values["theme"],
+            }
+        )
+        new_db_path = resolve_database_path(updated_config)
+
+        try:
+            new_repository = DatabaseRepository(new_db_path)
+            save_config(updated_config)
+        except Exception as exc:
+            QMessageBox.critical(self, "Einstellungen", str(exc))
+            return
+
+        self.config_data = updated_config
+        self.db_path = new_db_path
+        self.repository = new_repository
+        self.selected_asset_id = None
+        self.auto_refresh_timer.start(self._auto_refresh_interval_ms())
+        self.setWindowTitle(self.config_data.get("app_name", "Device Management v2"))
+        self.refresh_view(origin="local-write")
+        self.status_label.setText("Einstellungen gespeichert.")
 
     def refresh_view(self, origin: str = "manual") -> None:
         try:
@@ -597,6 +641,22 @@ class DeviceManagementV2Window(QMainWindow):
         )
         self.refresh_view(origin="local-write")
 
+    def export_import_template_file(self) -> None:
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Importvorlage speichern",
+            build_export_filename("xlsx", prefix="DeviceManagementV2_Importvorlage"),
+            "Excel-Dateien (*.xlsx);;Alle Dateien (*.*)",
+        )
+        if not file_path:
+            return
+        try:
+            export_import_template(file_path)
+        except Exception as exc:
+            QMessageBox.critical(self, "Importvorlage", str(exc))
+            return
+        self.status_label.setText(f"Importvorlage gespeichert: {Path(file_path).name}")
+
     def edit_asset(self) -> None:
         asset = self.selected_asset()
         if not asset:
@@ -793,11 +853,27 @@ class DeviceManagementV2Window(QMainWindow):
         if not file_path:
             return
         try:
-            export_asset_snapshots_to_html(self.filtered_asset_rows, file_path)
+            export_asset_snapshots_to_html(
+                self.filtered_asset_rows,
+                file_path,
+                filter_summary=self._filter_summary(),
+            )
         except Exception as exc:
             QMessageBox.critical(self, "Druckansicht", str(exc))
             return
         self.status_label.setText(f"Druckansicht gespeichert: {Path(file_path).name}")
+
+    def _filter_summary(self) -> str:
+        parts = []
+        query = self.search_edit.text().strip()
+        status = self.status_filter.currentText()
+        if query:
+            parts.append(f"Suche: {query}")
+        if status != "Alle Status":
+            parts.append(f"Status: {status}")
+        if not parts:
+            return "Alle Devices"
+        return " | ".join(parts)
 
     def backup_database(self) -> None:
         file_path, _ = QFileDialog.getSaveFileName(
