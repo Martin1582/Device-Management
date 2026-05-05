@@ -70,13 +70,6 @@ def _short_date(value) -> str:
     return str(value).replace("T", " ")
 
 
-def _compact_path(path: Path) -> str:
-    parts = path.parts
-    if len(parts) <= 3:
-        return str(path)
-    return f"...\\{parts[-2]}\\{parts[-1]}"
-
-
 class MetricCard(QFrame):
     def __init__(self, title: str, value: str = "0"):
         super().__init__()
@@ -162,13 +155,13 @@ class DeviceManagementV2Window(QMainWindow):
     def _build_actions(self) -> None:
         self.refresh_action = QAction("Aktualisieren", self)
         self.refresh_action.triggered.connect(lambda: self.refresh_view(origin="manual"))
-        self.new_asset_action = QAction("Asset neu", self)
+        self.new_asset_action = QAction("Device neu", self)
         self.new_asset_action.triggered.connect(self.create_asset)
         self.import_action = QAction("Import", self)
         self.import_action.triggered.connect(self.import_assets)
-        self.edit_asset_action = QAction("Asset bearbeiten", self)
+        self.edit_asset_action = QAction("Device bearbeiten", self)
         self.edit_asset_action.triggered.connect(self.edit_asset)
-        self.delete_asset_action = QAction("Asset loeschen", self)
+        self.delete_asset_action = QAction("Device loeschen", self)
         self.delete_asset_action.triggered.connect(self.delete_asset)
         self.people_action = QAction("Personen", self)
         self.people_action.triggered.connect(self.open_people_dialog)
@@ -223,20 +216,18 @@ class DeviceManagementV2Window(QMainWindow):
         title_box = QVBoxLayout()
         title = QLabel("Device Management v2")
         title.setObjectName("pageTitle")
-        subtitle = QLabel("Asset Operations Console | SQLite offline | PySide6")
-        subtitle.setObjectName("pageSubtitle")
         title_box.addWidget(title)
-        title_box.addWidget(subtitle)
 
-        self.db_badge = QLabel(f"Datenbank: {_compact_path(self.db_path)}")
-        self.db_badge.setObjectName("badge")
-        self.db_badge.setToolTip(str(self.db_path))
+        self.db_button = QPushButton("Datenbank")
+        self.db_button.setObjectName("dbButton")
+        self.db_button.setToolTip(str(self.db_path))
+        self.db_button.clicked.connect(self.show_database_path)
         self.scanner_status = StatusLamp(
             "Scanner aktiv" if self.scanner_available else "Scanner inaktiv",
             self.scanner_available,
         )
         badges = QVBoxLayout()
-        badges.addWidget(self.db_badge, alignment=Qt.AlignRight)
+        badges.addWidget(self.db_button, alignment=Qt.AlignRight)
         badges.addWidget(self.scanner_status, alignment=Qt.AlignRight)
         header.addLayout(title_box, 1)
         header.addLayout(badges)
@@ -244,7 +235,7 @@ class DeviceManagementV2Window(QMainWindow):
 
         metrics = QGridLayout()
         metrics.setHorizontalSpacing(10)
-        self.asset_metric = MetricCard("Assets")
+        self.asset_metric = MetricCard("Devices")
         self.people_metric = MetricCard("Personen")
         self.assignment_metric = MetricCard("Zuweisungen")
         self.schema_metric = MetricCard("Schema")
@@ -282,7 +273,7 @@ class DeviceManagementV2Window(QMainWindow):
         self.setCentralWidget(central)
 
     def _build_asset_table(self) -> QWidget:
-        box = QGroupBox("Asset-Uebersicht")
+        box = QGroupBox("Device-Uebersicht")
         layout = QVBoxLayout(box)
         layout.setContentsMargins(12, 14, 12, 12)
         layout.setSpacing(8)
@@ -315,7 +306,7 @@ class DeviceManagementV2Window(QMainWindow):
         layout.setSpacing(12)
         layout.addStretch(1)
 
-        self.empty_title = QLabel("Noch keine Assets vorhanden")
+        self.empty_title = QLabel("Noch keine Devices vorhanden")
         self.empty_title.setObjectName("emptyTitle")
         self.empty_title.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.empty_title)
@@ -331,7 +322,7 @@ class DeviceManagementV2Window(QMainWindow):
         actions = QHBoxLayout()
         actions.setSpacing(10)
         actions.addStretch(1)
-        new_asset_button = QPushButton("Asset anlegen")
+        new_asset_button = QPushButton("Device anlegen")
         new_asset_button.setObjectName("primaryButton")
         new_asset_button.clicked.connect(self.create_asset)
         people_button = QPushButton("Personen pflegen")
@@ -351,7 +342,7 @@ class DeviceManagementV2Window(QMainWindow):
         box = QGroupBox("Details")
         layout = QVBoxLayout(box)
 
-        self.notice_label = QLabel("Noch kein Asset ausgewaehlt.")
+        self.notice_label = QLabel("Noch kein Device ausgewaehlt.")
         self.notice_label.setObjectName("notice")
         self.notice_label.setWordWrap(True)
         layout.addWidget(self.notice_label)
@@ -363,7 +354,7 @@ class DeviceManagementV2Window(QMainWindow):
         self.timeline_text.setReadOnly(True)
         self.assignment_text = QTextEdit()
         self.assignment_text.setReadOnly(True)
-        self.tabs.addTab(self.detail_text, "Asset")
+        self.tabs.addTab(self.detail_text, "Device")
         self.tabs.addTab(self.assignment_text, "Zuweisung")
         self.tabs.addTab(self.timeline_text, "Timeline")
         layout.addWidget(self.tabs, 1)
@@ -371,6 +362,9 @@ class DeviceManagementV2Window(QMainWindow):
 
     def _apply_styles(self) -> None:
         apply_pyside_theme(self)
+
+    def show_database_path(self) -> None:
+        QMessageBox.information(self, "Datenbank", str(self.db_path))
 
     def refresh_view(self, origin: str = "manual") -> None:
         try:
@@ -389,7 +383,7 @@ class DeviceManagementV2Window(QMainWindow):
         self.people_metric.set_value(status.people_count)
         self.assignment_metric.set_value(status.assignment_count)
         self.schema_metric.set_value(status.schema_version)
-        self.db_badge.setText(f"Datenbank: {_compact_path(self.db_path)}")
+        self.db_button.setToolTip(str(self.db_path))
         self.asset_model.set_rows(self.asset_rows)
         self.apply_filter(keep_selection=True)
         self.sync_label.setText(f"Letzte Aktualisierung: {datetime.now().strftime('%H:%M:%S')}")
@@ -421,9 +415,9 @@ class DeviceManagementV2Window(QMainWindow):
             self.selected_asset_id = None
             if self.asset_rows:
                 self.empty_title.setText("Keine Treffer")
-                self.empty_body.setText("Passe Suche oder Statusfilter an, um wieder Assets in der Liste zu sehen.")
+                self.empty_body.setText("Passe Suche oder Statusfilter an, um wieder Devices in der Liste zu sehen.")
             else:
-                self.empty_title.setText("Noch keine Assets vorhanden")
+                self.empty_title.setText("Noch keine Devices vorhanden")
                 self.empty_body.setText(
                     "Lege das erste Geraet an oder scanne einen Barcode/QR-Code, um direkt mit einer SN / IMEI zu starten."
                 )
@@ -454,8 +448,8 @@ class DeviceManagementV2Window(QMainWindow):
     def update_detail_panel(self) -> None:
         asset = self.selected_asset()
         if not asset:
-            self.notice_label.setText("Noch kein Asset ausgewaehlt.")
-            self.detail_text.setPlainText("Bitte links ein Asset auswaehlen.")
+            self.notice_label.setText("Noch kein Device ausgewaehlt.")
+            self.detail_text.setPlainText("Bitte links ein Device auswaehlen.")
             self.assignment_text.setPlainText("")
             self.timeline_text.setPlainText("")
             return
@@ -549,21 +543,21 @@ class DeviceManagementV2Window(QMainWindow):
         self.repository.release_edit_claim("managed_asset", asset_id, editor_id=self.editor_id)
 
     def create_asset(self) -> None:
-        dialog = AssetDialog(self, "Asset anlegen")
+        dialog = AssetDialog(self, "Device anlegen")
         if dialog.exec() != QDialog.Accepted:
             return
         try:
             self.repository.create_asset(**dialog.values())
         except Exception as exc:
-            QMessageBox.critical(self, "Asset anlegen", str(exc))
+            QMessageBox.critical(self, "Device anlegen", str(exc))
             return
-        self.status_label.setText("Asset angelegt.")
+        self.status_label.setText("Device angelegt.")
         self.refresh_view(origin="local-write")
 
     def import_assets(self) -> None:
         file_path, _ = QFileDialog.getOpenFileName(
             self,
-            "Asset-Import auswaehlen",
+            "Device-Import auswaehlen",
             "",
             "Importdateien (*.xlsx *.csv);;Excel-Dateien (*.xlsx);;CSV-Dateien (*.csv);;Alle Dateien (*.*)",
         )
@@ -593,25 +587,25 @@ class DeviceManagementV2Window(QMainWindow):
                 self,
                 "Import abgeschlossen",
                 (
-                    f"Assets angelegt: {summary.created_assets}\n"
+                    f"Devices angelegt: {summary.created_assets}\n"
                     f"Zuweisungen angelegt: {summary.created_assignments}\n"
                     f"Uebersprungen: {summary.skipped}"
                 ),
             )
         self.status_label.setText(
-            f"Import abgeschlossen: {summary.created_assets} Assets, {summary.skipped} uebersprungen."
+            f"Import abgeschlossen: {summary.created_assets} Devices, {summary.skipped} uebersprungen."
         )
         self.refresh_view(origin="local-write")
 
     def edit_asset(self) -> None:
         asset = self.selected_asset()
         if not asset:
-            QMessageBox.information(self, "Asset bearbeiten", "Bitte zuerst ein Asset auswaehlen.")
+            QMessageBox.information(self, "Device bearbeiten", "Bitte zuerst ein Device auswaehlen.")
             return
         if not self.acquire_asset_claim(asset):
             return
         try:
-            dialog = AssetDialog(self, "Asset bearbeiten", asset)
+            dialog = AssetDialog(self, "Device bearbeiten", asset)
             if dialog.exec() != QDialog.Accepted:
                 return
             self.repository.update_asset(
@@ -623,19 +617,19 @@ class DeviceManagementV2Window(QMainWindow):
             QMessageBox.warning(self, "Konflikt", str(exc))
             return
         except Exception as exc:
-            QMessageBox.critical(self, "Asset bearbeiten", str(exc))
+            QMessageBox.critical(self, "Device bearbeiten", str(exc))
             return
         finally:
             self.release_asset_claim(asset["id"])
-        self.status_label.setText("Asset gespeichert.")
+        self.status_label.setText("Device gespeichert.")
         self.refresh_view(origin="local-write")
 
     def delete_asset(self) -> None:
         asset = self.selected_asset()
         if not asset:
-            QMessageBox.information(self, "Asset loeschen", "Bitte zuerst ein Asset auswaehlen.")
+            QMessageBox.information(self, "Device loeschen", "Bitte zuerst ein Device auswaehlen.")
             return
-        if QMessageBox.question(self, "Asset loeschen", f"{asset['asset_tag']} wirklich loeschen?") != QMessageBox.Yes:
+        if QMessageBox.question(self, "Device loeschen", f"{asset['asset_tag']} wirklich loeschen?") != QMessageBox.Yes:
             return
         try:
             self.repository.delete_asset(asset["id"], actor="pyside-ui", expected_record_version=asset["record_version"])
@@ -643,10 +637,10 @@ class DeviceManagementV2Window(QMainWindow):
             QMessageBox.warning(self, "Konflikt", str(exc))
             return
         except Exception as exc:
-            QMessageBox.critical(self, "Asset loeschen", str(exc))
+            QMessageBox.critical(self, "Device loeschen", str(exc))
             return
         self.selected_asset_id = None
-        self.status_label.setText("Asset geloescht.")
+        self.status_label.setText("Device geloescht.")
         self.refresh_view(origin="local-write")
 
     def open_people_dialog(self) -> None:
@@ -657,7 +651,7 @@ class DeviceManagementV2Window(QMainWindow):
     def assign_asset(self) -> None:
         asset = self.selected_asset()
         if not asset:
-            QMessageBox.information(self, "Zuweisung", "Bitte zuerst ein Asset auswaehlen.")
+            QMessageBox.information(self, "Zuweisung", "Bitte zuerst ein Device auswaehlen.")
             return
         people = self.repository.list_people()
         if not people:
@@ -682,7 +676,7 @@ class DeviceManagementV2Window(QMainWindow):
         asset = self.selected_asset()
         assignment = self.selected_assignment()
         if not asset or not assignment:
-            QMessageBox.information(self, "Zuweisung", "Dieses Asset hat keine aktive Zuweisung.")
+            QMessageBox.information(self, "Zuweisung", "Dieses Device hat keine aktive Zuweisung.")
             return
         people = self.repository.list_people()
         if not self.acquire_asset_claim(asset):
@@ -712,7 +706,7 @@ class DeviceManagementV2Window(QMainWindow):
         asset = self.selected_asset()
         assignment = self.selected_assignment()
         if not asset or not assignment:
-            QMessageBox.information(self, "Rueckgabe", "Dieses Asset hat keine aktive Zuweisung.")
+            QMessageBox.information(self, "Rueckgabe", "Dieses Device hat keine aktive Zuweisung.")
             return
         if QMessageBox.question(self, "Rueckgabe", f"Zuweisung fuer {asset['asset_tag']} beenden?") != QMessageBox.Yes:
             return
@@ -756,20 +750,20 @@ class DeviceManagementV2Window(QMainWindow):
             self.apply_filter(keep_selection=True)
             self.status_label.setText(f"Code gefunden: {identifier}")
         else:
-            create = QMessageBox.question(self, "Code suchen", f"Kein Asset fuer {identifier} gefunden. Neues Asset anlegen?")
+            create = QMessageBox.question(self, "Code suchen", f"Kein Device fuer {identifier} gefunden. Neues Device anlegen?")
             if create == QMessageBox.Yes:
-                dialog = AssetDialog(self, "Asset anlegen", scanned_identifier=identifier)
+                dialog = AssetDialog(self, "Device anlegen", scanned_identifier=identifier)
                 if dialog.exec() == QDialog.Accepted:
                     try:
                         self.repository.create_asset(**dialog.values())
                     except Exception as exc:
-                        QMessageBox.critical(self, "Asset anlegen", str(exc))
+                        QMessageBox.critical(self, "Device anlegen", str(exc))
                         return
                     self.refresh_view(origin="local-write")
 
     def export_current_view_to_csv(self) -> None:
         if not self.filtered_asset_rows:
-            QMessageBox.information(self, "CSV exportieren", "Die aktuelle Ansicht enthaelt keine Assets.")
+            QMessageBox.information(self, "CSV exportieren", "Die aktuelle Ansicht enthaelt keine Devices.")
             return
         file_path, _ = QFileDialog.getSaveFileName(
             self,
@@ -788,7 +782,7 @@ class DeviceManagementV2Window(QMainWindow):
 
     def export_current_view_to_html(self) -> None:
         if not self.filtered_asset_rows:
-            QMessageBox.information(self, "Druckansicht", "Die aktuelle Ansicht enthaelt keine Assets.")
+            QMessageBox.information(self, "Druckansicht", "Die aktuelle Ansicht enthaelt keine Devices.")
             return
         file_path, _ = QFileDialog.getSaveFileName(
             self,

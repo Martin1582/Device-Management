@@ -154,7 +154,7 @@ class AssignmentDialog(QDialog):
             self.hostname_edit.setEnabled(False)
 
         form = QFormLayout()
-        form.addRow("Asset", QLabel(f"{asset['asset_tag']} | {asset['model_name']}"))
+        form.addRow("Device", QLabel(f"{asset['asset_tag']} | {asset['model_name']}"))
         form.addRow("Person", self.person_combo)
         form.addRow("Hostname", self.hostname_edit)
         form.addRow("Notizen", self.notes_edit)

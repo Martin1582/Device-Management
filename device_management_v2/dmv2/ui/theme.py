@@ -177,6 +177,17 @@ QScrollBar::add-line, QScrollBar::sub-line {
     border: 1px solid #25445a;
     color: #cfefff;
 }
+#dbButton {
+    background: #10283a;
+    border: 1px solid #25506a;
+    border-radius: 5px;
+    color: #e6f6ff;
+    padding: 7px 11px;
+}
+#dbButton:hover {
+    background: #12364f;
+    border-color: #30c7df;
+}
 #badgeOk {
     background: #09261f;
     border: 1px solid #16a34a;
@@ -188,9 +199,8 @@ QScrollBar::add-line, QScrollBar::sub-line {
     color: #ffd48a;
 }
 #statusLamp {
-    background: #102232;
-    border: 1px solid #25445a;
-    border-radius: 5px;
+    background: transparent;
+    border: 0;
 }
 #statusLampText {
     color: #cfefff;
