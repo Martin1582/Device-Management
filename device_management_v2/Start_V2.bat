@@ -7,7 +7,9 @@ cd /d "%SCRIPT_DIR%"
 set "VENV_DIR=%SCRIPT_DIR%.venv"
 set "PYTHON_EXE=%VENV_DIR%\Scripts\python.exe"
 
-if exist "%PYTHON_EXE%" (
+if not exist "%PYTHON_EXE%" (
+    set "PYTHON_EXE="
+) else (
     "%PYTHON_EXE%" --version >nul 2>nul
     if errorlevel 1 set "PYTHON_EXE="
 )
