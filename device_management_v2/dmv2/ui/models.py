@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, QSortFilterProxyModel, Qt
+from PySide6.QtGui import QBrush, QColor
 
 
 ASSET_COLUMNS = [
@@ -38,9 +39,16 @@ class AssetTableModel(QAbstractTableModel):
             return None
         key, _label = ASSET_COLUMNS[index.column()]
         if role == Qt.DisplayRole:
-            return _cell(row.get(key))
+            value = _cell(row.get(key))
+            if key == "inventory_status":
+                return value.upper()
+            return value
         if role == Qt.TextAlignmentRole and key == "id":
             return Qt.AlignRight | Qt.AlignVCenter
+        if role == Qt.ForegroundRole and key == "inventory_status":
+            return QBrush(_status_color(row.get(key)))
+        if role == Qt.BackgroundRole and key == "inventory_status":
+            return QBrush(_status_background(row.get(key)))
         if role == Qt.UserRole:
             return row
         return None
@@ -135,3 +143,25 @@ def _sort_value(value):
     if isinstance(value, int):
         return value
     return str(value).casefold().strip()
+
+
+def _status_color(value):
+    status = _cell(value).casefold()
+    if status == "active":
+        return QColor("#8ff0b1")
+    if status == "inactive":
+        return QColor("#ffd48a")
+    if status == "retired":
+        return QColor("#ff9b9b")
+    return QColor("#dceaf7")
+
+
+def _status_background(value):
+    status = _cell(value).casefold()
+    if status == "active":
+        return QColor("#09261f")
+    if status == "inactive":
+        return QColor("#2a2110")
+    if status == "retired":
+        return QColor("#2b1216")
+    return QColor("#0b1620")

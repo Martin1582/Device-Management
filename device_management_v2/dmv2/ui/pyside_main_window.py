@@ -52,6 +52,7 @@ from ..services.importer import build_import_preview, import_preview_rows
 from ..services.scanner import decode_identifier_from_file, scanner_runtime_available
 from .dialogs import AssignmentDialog, AssetDialog, ImportPreviewDialog, PeopleDialog
 from .models import AssetFilterProxyModel, AssetTableModel
+from .theme import apply_pyside_theme
 
 
 INVENTORY_STATUSES = ("active", "inactive", "retired")
@@ -196,14 +197,14 @@ class DeviceManagementV2Window(QMainWindow):
     def _build_ui(self) -> None:
         central = QWidget()
         root = QVBoxLayout(central)
-        root.setContentsMargins(18, 18, 18, 12)
+        root.setContentsMargins(20, 18, 20, 12)
         root.setSpacing(12)
 
         header = QHBoxLayout()
         title_box = QVBoxLayout()
         title = QLabel("Device Management v2")
         title.setObjectName("pageTitle")
-        subtitle = QLabel("PySide6-Oberflaeche auf der bestehenden v2-Repository- und Migrationsschicht")
+        subtitle = QLabel("Asset Operations Console | SQLite offline | PySide6")
         subtitle.setObjectName("pageSubtitle")
         title_box.addWidget(title)
         title_box.addWidget(subtitle)
@@ -272,6 +273,10 @@ class DeviceManagementV2Window(QMainWindow):
         self.asset_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.asset_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.asset_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.asset_table.setAlternatingRowColors(True)
+        self.asset_table.setShowGrid(False)
+        self.asset_table.verticalHeader().setVisible(False)
+        self.asset_table.verticalHeader().setDefaultSectionSize(34)
         self.asset_table.setSortingEnabled(True)
         self.asset_table.selectionModel().selectionChanged.connect(self.handle_asset_selection)
         self.asset_table.doubleClicked.connect(self.edit_asset)
@@ -344,127 +349,7 @@ class DeviceManagementV2Window(QMainWindow):
         return box
 
     def _apply_styles(self) -> None:
-        self.setStyleSheet(
-            """
-            QMainWindow, QWidget {
-                background: #f5f7fb;
-                color: #172033;
-                font-family: Segoe UI, Arial, sans-serif;
-                font-size: 10pt;
-            }
-            QToolBar {
-                background: #ffffff;
-                border: 0;
-                border-bottom: 1px solid #d7dee8;
-                spacing: 6px;
-                padding: 6px;
-            }
-            QToolButton, QPushButton {
-                background: #17406f;
-                color: #ffffff;
-                border: 0;
-                border-radius: 5px;
-                padding: 6px 10px;
-            }
-            QToolButton:hover, QPushButton:hover {
-                background: #123257;
-            }
-            QToolButton:disabled, QPushButton:disabled {
-                background: #c7d2de;
-                color: #64748b;
-            }
-            QLineEdit, QComboBox, QTextEdit, QTableView {
-                background: #ffffff;
-                border: 1px solid #ccd6e2;
-                border-radius: 5px;
-                padding: 5px;
-                selection-background-color: #17406f;
-            }
-            QHeaderView::section {
-                background: #e9eff6;
-                color: #243247;
-                border: 0;
-                border-right: 1px solid #d7dee8;
-                padding: 7px;
-                font-weight: 600;
-            }
-            QGroupBox {
-                background: #ffffff;
-                border: 1px solid #d7dee8;
-                border-radius: 7px;
-                margin-top: 20px;
-                padding: 12px;
-                font-weight: 600;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 12px;
-                padding: 0 4px;
-            }
-            #pageTitle {
-                font-size: 23pt;
-                font-weight: 700;
-                color: #14365d;
-            }
-            #pageSubtitle {
-                color: #5a6f86;
-            }
-            #metricCard {
-                background: #ffffff;
-                border: 1px solid #d7dee8;
-                border-radius: 7px;
-            }
-            #metricTitle {
-                color: #5a6f86;
-                font-weight: 600;
-            }
-            #metricValue {
-                color: #14365d;
-                font-size: 22pt;
-                font-weight: 700;
-            }
-            #badge, #badgeOk, #badgeWarn, #notice {
-                border-radius: 5px;
-                padding: 6px 8px;
-            }
-            #badge {
-                background: #e9eff6;
-                color: #243247;
-            }
-            #badgeOk {
-                background: #dff4e8;
-                color: #17603a;
-            }
-            #badgeWarn {
-                background: #f9ebcf;
-                color: #8a5a00;
-            }
-            #notice {
-                background: #e9eff6;
-                color: #243247;
-            }
-            #emptyState {
-                background: #ffffff;
-                border: 1px dashed #b9c7d8;
-                border-radius: 7px;
-            }
-            #emptyTitle {
-                color: #14365d;
-                font-size: 18pt;
-                font-weight: 700;
-            }
-            #emptyBody {
-                color: #5a6f86;
-                font-size: 10pt;
-            }
-            #primaryButton {
-                background: #0f766e;
-            }
-            #primaryButton:hover {
-                background: #115e59;
-            }
-            """
-        )
+        apply_pyside_theme(self)
 
     def refresh_view(self, origin: str = "manual") -> None:
         try:

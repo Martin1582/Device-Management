@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
@@ -259,6 +260,23 @@ class PeopleDialog(QDialog):
             return
         self.refresh()
 
+    def delete_person(self) -> None:
+        person = self.selected_person()
+        if not person:
+            QMessageBox.information(self, "Person", "Bitte zuerst eine Person auswaehlen.")
+            return
+        if QMessageBox.question(self, "Person loeschen", f"{person['display_name']} wirklich loeschen?") != QMessageBox.Yes:
+            return
+        try:
+            self.repository.delete_person(person["id"], actor="pyside-ui", expected_record_version=person["record_version"])
+        except ConflictError as exc:
+            QMessageBox.warning(self, "Konflikt", str(exc))
+            return
+        except Exception as exc:
+            QMessageBox.critical(self, "Person", str(exc))
+            return
+        self.refresh()
+
 
 class ImportPreviewDialog(QDialog):
     def __init__(self, parent, preview: ImportPreview):
@@ -301,6 +319,10 @@ class ImportPreviewDialog(QDialog):
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.setAlternatingRowColors(True)
+        self.table.setShowGrid(False)
+        self.table.verticalHeader().setVisible(False)
+        self.table.verticalHeader().setDefaultSectionSize(34)
         self._fill_table()
 
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel)
@@ -332,6 +354,10 @@ class ImportPreviewDialog(QDialog):
             for column, value in enumerate(values):
                 item = QTableWidgetItem(_text(value))
                 item.setData(Qt.UserRole, import_row.status)
+                if column in (0, 9):
+                    item.setForeground(QBrush(_import_status_color(import_row.status)))
+                if column == 0:
+                    item.setBackground(QBrush(_import_status_background(import_row.status)))
                 self.table.setItem(row_index, column, item)
 
     def _status_label(self, status: str) -> str:
@@ -341,19 +367,18 @@ class ImportPreviewDialog(QDialog):
             return "Duplikat"
         return "Fehler"
 
-    def delete_person(self) -> None:
-        person = self.selected_person()
-        if not person:
-            QMessageBox.information(self, "Person", "Bitte zuerst eine Person auswaehlen.")
-            return
-        if QMessageBox.question(self, "Person loeschen", f"{person['display_name']} wirklich loeschen?") != QMessageBox.Yes:
-            return
-        try:
-            self.repository.delete_person(person["id"], actor="pyside-ui", expected_record_version=person["record_version"])
-        except ConflictError as exc:
-            QMessageBox.warning(self, "Konflikt", str(exc))
-            return
-        except Exception as exc:
-            QMessageBox.critical(self, "Person", str(exc))
-            return
-        self.refresh()
+
+def _import_status_color(status: str) -> QColor:
+    if status == "ok":
+        return QColor("#8ff0b1")
+    if status == "duplicate":
+        return QColor("#ffd48a")
+    return QColor("#ff9b9b")
+
+
+def _import_status_background(status: str) -> QColor:
+    if status == "ok":
+        return QColor("#09261f")
+    if status == "duplicate":
+        return QColor("#2a2110")
+    return QColor("#2b1216")
