@@ -187,6 +187,24 @@ QScrollBar::add-line, QScrollBar::sub-line {
     border: 1px solid #d97706;
     color: #ffd48a;
 }
+#statusLamp {
+    background: #102232;
+    border: 1px solid #25445a;
+    border-radius: 5px;
+}
+#statusLampText {
+    color: #cfefff;
+}
+#lampOn {
+    background: #35f49a;
+    border: 1px solid #8ff0b1;
+    border-radius: 5px;
+}
+#lampOff {
+    background: #f59e0b;
+    border: 1px solid #ffd48a;
+    border-radius: 5px;
+}
 #notice {
     background: #102232;
     border: 1px solid #25445a;

@@ -96,6 +96,25 @@ class MetricCard(QFrame):
         self.value_label.setText(str(value))
 
 
+class StatusLamp(QFrame):
+    def __init__(self, text: str, active: bool):
+        super().__init__()
+        self.setObjectName("statusLamp")
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(9, 6, 10, 6)
+        layout.setSpacing(8)
+
+        self.lamp = QLabel()
+        self.lamp.setFixedSize(10, 10)
+        self.lamp.setObjectName("lampOn" if active else "lampOff")
+
+        self.text_label = QLabel(text)
+        self.text_label.setObjectName("statusLampText")
+        layout.addWidget(self.lamp)
+        layout.addWidget(self.text_label)
+
+
 class DeviceManagementV2Window(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -212,11 +231,13 @@ class DeviceManagementV2Window(QMainWindow):
         self.db_badge = QLabel(f"Datenbank: {_compact_path(self.db_path)}")
         self.db_badge.setObjectName("badge")
         self.db_badge.setToolTip(str(self.db_path))
-        self.scanner_badge = QLabel("Scanner aktiv" if self.scanner_available else "Scanner inaktiv")
-        self.scanner_badge.setObjectName("badgeOk" if self.scanner_available else "badgeWarn")
+        self.scanner_status = StatusLamp(
+            "Scanner aktiv" if self.scanner_available else "Scanner inaktiv",
+            self.scanner_available,
+        )
         badges = QVBoxLayout()
         badges.addWidget(self.db_badge, alignment=Qt.AlignRight)
-        badges.addWidget(self.scanner_badge, alignment=Qt.AlignRight)
+        badges.addWidget(self.scanner_status, alignment=Qt.AlignRight)
         header.addLayout(title_box, 1)
         header.addLayout(badges)
         root.addLayout(header)
