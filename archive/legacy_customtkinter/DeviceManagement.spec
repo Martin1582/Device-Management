@@ -5,7 +5,7 @@ a = Analysis(
     ['v0.2.py'],
     pathex=[],
     binaries=[],
-    datas=[('assets/app_icon.ico', 'assets'), ('assets/app_icon.png', 'assets')],
+    datas=[('BRNL.ico', '.'), ('BRNL.png', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -35,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['assets/app_icon.ico'],
+    icon=['BRNL.ico'],
 )

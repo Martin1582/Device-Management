@@ -326,7 +326,7 @@ def build_duplicate_report(rows):
 
 def build_export_filename():
     date_str = datetime.now().strftime("%Y-%m-%d")
-    return f"DeviceManagement_Assets_{date_str}.csv"
+    return f"Brunel_Assets_{date_str}.csv"
 
 
 def build_backup_filename():

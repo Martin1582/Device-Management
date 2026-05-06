@@ -80,15 +80,14 @@ class DeviceManagementV2App(ctk.CTk):
     def _resource_path(self, filename):
         local_root = Path(__file__).resolve().parents[2]
         project_root = local_root.parent
-        workspace_root = project_root.parent
-        for candidate in (local_root / filename, project_root / filename, workspace_root / filename):
+        for candidate in (local_root / filename, project_root / filename):
             if candidate.exists():
                 return candidate
         return local_root / filename
 
     def _apply_window_icon(self):
-        icon_path = self._resource_path("assets/app_icon.ico")
-        png_path = self._resource_path("assets/app_icon.png")
+        icon_path = self._resource_path("BRNL.ico")
+        png_path = self._resource_path("BRNL.png")
         if icon_path.exists():
             try:
                 self.iconbitmap(default=str(icon_path))
