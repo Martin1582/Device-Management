@@ -1,5 +1,5 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 
 set "SCRIPT_DIR=%~dp0"
 cd /d "%SCRIPT_DIR%"
@@ -16,7 +16,7 @@ if not exist "%PYTHON_EXE%" (
 
 if "%PYTHON_EXE%"=="" (
     call :find_base_python
-    if "%BASE_PYTHON%"=="" (
+    if "!BASE_PYTHON!"=="" (
         echo Keine funktionierende Python-Installation gefunden.
         echo Bitte Python 3.13 oder neuer installieren und danach erneut Start.bat ausfuehren.
         pause
@@ -24,7 +24,7 @@ if "%PYTHON_EXE%"=="" (
     )
 
     echo Erstelle lokale Python-Umgebung fuer Device Management v2...
-    "%BASE_PYTHON%" -m venv --clear "%VENV_DIR%"
+    "!BASE_PYTHON!" -m venv --clear "%VENV_DIR%"
     if errorlevel 1 (
         echo Die lokale Python-Umgebung konnte nicht erstellt werden.
         pause
